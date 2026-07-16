@@ -1,0 +1,399 @@
+\documentclass[11pt,a4paper,fontset=fandol]{ctexart}
+
+\usepackage[a4paper,margin=18mm,headheight=22pt,footskip=12mm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,tabularx,array}
+\usepackage[skins,breakable]{tcolorbox}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+
+\definecolor{Ink}{HTML}{243447}
+\definecolor{Blue}{HTML}{1F5A8A}
+\definecolor{Teal}{HTML}{167D78}
+\definecolor{Gold}{HTML}{B47716}
+\definecolor{Red}{HTML}{A33B3B}
+\definecolor{PaleBlue}{HTML}{EEF5FA}
+\definecolor{PaleTeal}{HTML}{EDF8F6}
+\definecolor{PaleGold}{HTML}{FFF7E8}
+\definecolor{PaleRed}{HTML}{FCEEEE}
+\definecolor{Rule}{HTML}{CAD5DF}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=Blue,
+  urlcolor=Teal,
+  pdftitle={GEA1000 Quantitative Reasoning with Data: concepts and quick reference},
+  pdfauthor={Independent re-typeset study notes},
+  pdfsubject={GEA1000 data literacy revision notes}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{Blue}\textbf{GEA1000} Quantitative Reasoning with Data}
+\fancyhead[R]{\small\color{Ink}概念讲义与速查}
+\fancyfoot[L]{\scriptsize\color{Ink!70}非官方学习资料，请以当学期课程材料为准}
+\fancyfoot[R]{\small\color{Ink}\thepage}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{Rule}\leaders\hrule height \headrulewidth\hfill}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\setlist[itemize]{leftmargin=1.5em,itemsep=2pt,topsep=3pt}
+\setlist[enumerate]{leftmargin=1.7em,itemsep=2pt,topsep=3pt}
+\renewcommand{\arraystretch}{1.18}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+\titleformat{\section}
+  {\Large\bfseries\color{Blue}}{\thesection}{0.6em}{}
+\titleformat{\subsection}
+  {\large\bfseries\color{Teal}}{\thesubsection}{0.5em}{}
+
+\newtcolorbox{keybox}[1]{
+  enhanced, breakable, colback=PaleBlue, colframe=Blue,
+  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm,
+  top=1.5mm, bottom=1.5mm, title=\textbf{#1},
+  colbacktitle=Blue, coltitle=white, fonttitle=\bfseries
+}
+\newtcolorbox{trapbox}[1]{
+  enhanced, breakable, colback=PaleRed, colframe=Red,
+  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm,
+  top=1.5mm, bottom=1.5mm, title=\textbf{易错点：#1},
+  colbacktitle=Red, coltitle=white, fonttitle=\bfseries
+}
+\newtcolorbox{methodbox}[1]{
+  enhanced, breakable, colback=PaleTeal, colframe=Teal,
+  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm,
+  top=1.5mm, bottom=1.5mm, title=\textbf{#1},
+  colbacktitle=Teal, coltitle=white, fonttitle=\bfseries
+}
+\newtcolorbox{exam}[1]{
+  enhanced, breakable, colback=PaleGold, colframe=Gold,
+  boxrule=0.7pt, arc=1.5mm, left=2.5mm, right=2.5mm,
+  top=1.5mm, bottom=1.5mm, title=\textbf{答题模板：#1},
+  colbacktitle=Gold, coltitle=white, fonttitle=\bfseries
+}
+
+\begin{document}
+
+\begin{tcolorbox}[
+  enhanced, colback=Ink, colframe=Ink, arc=2mm,
+  left=7mm, right=7mm, top=7mm, bottom=7mm
+]
+{\Huge\bfseries\color{white}GEA1000\par}
+\vspace{1mm}
+{\LARGE\bfseries\color{white}Quantitative Reasoning with Data\par}
+\vspace{3mm}
+{\Large\color{white!90}概念讲义与速查手册\par}
+\vspace{5mm}
+{\small\color{white!75}从“会背定义”走向“能判断证据、条件与结论”}
+\end{tcolorbox}
+
+\begin{keybox}{如何使用这份讲义}
+先沿着章节顺序建立逻辑链：\textbf{研究问题} $\rightarrow$ \textbf{收集数据} $\rightarrow$
+\textbf{描述数据} $\rightarrow$ \textbf{量化不确定性} $\rightarrow$ \textbf{作出有限度的结论}。
+考前再看每节末尾的“易错点”和第~\ref{sec:checklist} 节清单。本文是根据一份用户确认可开放使用的旧版速查表重新组织和改写的非官方资料；没有保留其下载水印或任何个人信息。
+\end{keybox}
+
+\tableofcontents
+\vspace{2mm}
+
+\section{研究问题、总体与样本}
+
+\subsection{先分清四个对象}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash\bfseries\color{Blue}}p{29mm}Y Y}
+\toprule
+术语 & 含义 & 检查问题 \\
+\midrule
+总体 Population & 研究想要了解的全部个体或单位。 & 结论究竟想推广到谁？ \\
+样本 Sample & 实际被观测的一部分总体单位。 & 数据真正来自谁？ \\
+抽样框 Sampling frame & 可供抽取样本的名单、数据库或操作性来源。 & 谁被遗漏、重复或错误列入？ \\
+普查 Census & 尝试观测总体中的每个单位。 & 即使全覆盖，是否仍有不回应或测量误差？ \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{trapbox}{抽样框不是“比总体更大就更好”}
+抽样框应当尽可能\textbf{准确覆盖目标总体}。框中漏掉总体成员叫覆盖不足
+(undercoverage)；包含总体外成员、重复记录或过期记录也会造成覆盖误差。
+因此不能用“sampling frame $\geq$ population”判断可推广性。
+\end{trapbox}
+
+\subsection{偏差与随机误差}
+
+\begin{itemize}
+  \item \textbf{选择偏差 Selection bias}：进入样本的机制系统性偏向某些人，使样本和总体不同。
+  \item \textbf{不回应偏差 Non-response bias}：被抽中的人没有回应，而且回应与否和研究变量有关。
+  \item \textbf{测量偏差 Measurement bias}：问题措辞、仪器、访员或记忆误差让观测值系统性偏离真实值。
+  \item \textbf{随机抽样误差 Sampling variability}：即使方法无偏，不同随机样本仍会给出不同估计。增加样本量通常减少这种波动，但\textbf{不能修复系统性偏差}。
+\end{itemize}
+
+\section{抽样与研究设计}
+
+\subsection{概率抽样 Probability sampling}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash\bfseries\color{Blue}}p{33mm}Y Y}
+\toprule
+方法 & 正确定义 & 何时有用 \\
+\midrule
+简单随机抽样\newline\mbox{SRS} & 固定样本量为 $n$；抽样框中每一个大小为 $n$ 的子集都有相同的被选概率。 & 有完整抽样框，且可逐一抽取单位。 \\
+系统抽样\newline\mbox{Systematic} & 将抽样框按顺序排列，近似取间隔 $k=N/n$，先在首个间隔内\textbf{随机选起点}，再每隔 $k$ 个取一个。 & 名单很长；需留意顺序中的周期性。 \\
+分层抽样\newline\mbox{Stratified} & 先按重要特征分成互不重叠的层，再在\textbf{每一层}内做概率抽样。 & 希望保证小群体有代表，或提高精度。 \\
+整群抽样\newline\mbox{Cluster} & 把总体分成自然群组，随机抽取若干群，再观测所选群内全部或部分单位。 & 单位分散、逐个抽取成本高；同群相似会降低有效信息量。 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+非概率抽样包括便利抽样 (convenience sampling) 和志愿者抽样 (volunteer sampling)。它们可能很快、很便宜，但通常无法从样本机制推导可靠的总体推广。
+
+\begin{methodbox}{判断能否推广 Generalisability}
+依次检查：目标总体是否明确；抽样框覆盖是否良好；是否采用概率抽样；不回应和测量误差是否受控；样本量是否足以控制随机误差。\textbf{大样本只解决最后一项的一部分。}
+\end{methodbox}
+
+\subsection{观察性研究与实验}
+
+\textbf{观察性研究 Observational study}只观察暴露或特征与结果，通常可以描述关联，但混杂变量可能解释该关联。
+\textbf{随机对照实验 Randomized experiment}由研究者施加处理，并把实验单位随机分派到处理组，能在条件满足时提供更强的因果证据。
+
+\begin{center}
+\begin{tikzpicture}[node distance=17mm and 27mm, every node/.style={font=\small},
+  box/.style={draw=Blue, rounded corners, fill=PaleBlue, inner sep=4pt},
+  arr/.style={-{Latex[length=2.3mm]}, thick, color=Ink!75}]
+  \node[box] (c) {混杂变量 $C$};
+  \node[box, below left=of c] (x) {解释变量 $X$};
+  \node[box, below right=of c] (y) {结果变量 $Y$};
+  \draw[arr] (c) -- (x);
+  \draw[arr] (c) -- (y);
+  \draw[arr] (x) -- node[below, sloped]{观察到的关联} (y);
+\end{tikzpicture}
+\end{center}
+
+\begin{trapbox}{随机抽样不等于随机分派}
+\textbf{随机抽样}主要支持从样本推广到总体；\textbf{随机分派}主要支持比较处理的因果效果。
+随机分派使各组在平均意义上趋于平衡，但不保证每次实验都得到完全相等的人数或完全相同的背景特征。
+\end{trapbox}
+
+单盲 (single blinding) 通常指参与者不知道自己所属组别；双盲 (double blinding) 通常还包括评估者或研究团队中直接接触结果判断的人。实际写答案时应明确“谁不知道什么”，不要只依赖标签。
+
+\section{变量、中心与离散程度}
+
+\subsection{变量类型}
+
+\begin{itemize}
+  \item \textbf{类别变量 Categorical}：取互斥类别。名义型 (nominal) 没有自然顺序；有序型 (ordinal) 有顺序但相邻差距未必可做算术。
+  \item \textbf{数值变量 Numerical}：数值大小及算术有意义。离散型 (discrete) 通常来自计数；连续型 (continuous) 可在区间内取值。
+  \item \textbf{随机变量 Random variable}不是普通的数据类型标签，而是把随机试验结果映射到数值并赋予概率的函数。
+\end{itemize}
+
+\subsection{位置与尺度的变换}
+
+若所有数据都变成 $y_i=a+b x_i$，则
+\[
+  \bar y=a+b\bar x, \qquad
+  \operatorname{median}(y)=a+b\operatorname{median}(x)\quad (b>0),
+\]
+当 $b<0$ 时，顺序会反转，但中位数仍按线性变换得到；而
+\[
+  s_y=|b|s_x, \qquad \operatorname{IQR}(y)=|b|\operatorname{IQR}(x).
+\]
+
+\begin{trapbox}{标准差和 IQR 的“零”条件不同}
+$s\geq0$ 且当且仅当所有观测值相同时 $s=0$。IQR 也非负，但\textbf{非相同数据仍可能有 IQR = 0}，例如大部分观测都相同、只有少数不同。
+\end{trapbox}
+
+\subsection{图形、偏态与离群值}
+
+箱线图常用 $Q_1-1.5\operatorname{IQR}$ 与 $Q_3+1.5\operatorname{IQR}$ 作为离群值围栏；须把这当作\textbf{标记规则}，而非自动删除规则。先检查录入错误，再结合研究背景判断。
+
+直方图的峰可提示众数区间，但分箱方式会影响外观。箱线图的箱中线是中位数，须线通常延伸到围栏内最远的观测，而不是必然到最小值和最大值。
+
+\begin{trapbox}{“右偏时均值大于中位数”只是常见经验}
+对单峰、形状较典型的分布，长右尾常把均值向右拉，因而常见
+$\text{mode}<\text{median}<\text{mean}$；左偏则常见相反顺序。
+但这不是由“偏态”标签单独保证的定理，多峰或不规则数据可以违背该顺序。
+\end{trapbox}
+
+\section{比例、条件概率与独立性}
+
+\subsection{基本概率规则}
+
+对事件 $A,B$，在分母概率非零时：
+\begin{align*}
+0&\leq P(A)\leq 1, & P(S)&=1, & P(A^c)&=1-P(A),\\
+P(A\cup B)&=P(A)+P(B)-P(A\cap B),
+& P(A\mid B)&=\frac{P(A\cap B)}{P(B)},\\
+P(A\cap B)&=P(A\mid B)P(B),
+& P(A)&=\sum_i P(A\mid B_i)P(B_i).
+\end{align*}
+最后一式是全概率公式，要求 $\{B_i\}$ 构成互斥且穷尽的分割。
+
+若 $A$ 与 $B$ 独立，则等价地有
+\[
+P(A\mid B)=P(A),\qquad P(A\cap B)=P(A)P(B),
+\]
+但这些等价写法也需要有关条件概率的分母不为零。
+
+\subsection{二分类率与关联}
+
+把 $\operatorname{rate}(A\mid B)$ 看成条件比例 $P(A\mid B)$。当二分类表的四个格子计数为 $a,b,c,d$ 时，关联方向由交叉乘积 $ad-bc$ 决定。因此在各条件率有定义时，
+\[
+P(A\mid B)>P(A\mid B^c)
+\Longleftrightarrow
+P(B\mid A)>P(B\mid A^c).
+\]
+全概率公式还给出
+\[
+P(A)=P(A\mid B)P(B)+P(A\mid B^c)P(B^c),
+\]
+所以总体率是两个分层率的\textbf{加权平均}，权重不是总为 $1/2$。
+
+\begin{keybox}{Sensitivity 与 Specificity}
+\textbf{Sensitivity} $=P(\text{test +}\mid\text{condition +})$；
+\textbf{Specificity} $=P(\text{test -}\mid\text{condition -})$。
+阳性预测值 $P(\text{condition +}\mid\text{test +})$ 是反向条件概率，除了灵敏度与特异度，还会受到患病率或基准率影响。
+\end{keybox}
+
+\subsection{Simpson's paradox 与混杂}
+
+Simpson's paradox 指在各分层中出现的关联，汇总后可能\textbf{反转或消失}，或汇总数据出现分层中没有的关联。它不要求“超过一半的组”有某种趋势。
+
+常见原因是各组的组成比例不同，并且分层变量同时与解释变量、结果变量有关。发现反转提示应报告分层结果并审查研究设计；它\textbf{不能单凭现象本身证明}某个变量就是因果意义上的混杂变量。
+
+\section{相关、回归与最小二乘}
+
+\subsection{相关系数 \texorpdfstring{$r$}{r}}
+
+$r\in[-1,1]$ 描述两个数值变量的\textbf{线性}关联方向与强度：交换 $x,y$ 不改变 $r$；对任一变量加常数不改变 $r$；乘以正数不改变 $r$，乘以负数会使 $r$ 变号，乘以零则让该变量无变异而使相关系数未定义。
+
+\begin{trapbox}{不要机械套用 0.3 和 0.7}
+用 $|r|$ 描述强弱，且“弱、中、强”的阈值必须结合学科、测量误差、样本量和研究目的。散点图还可能暴露非线性、分组和离群值，这些都不是一个 $r$ 能概括的。
+\end{trapbox}
+
+相关不等于因果：反向因果、混杂、选择机制或偶然性都可能产生关联。删除离群值可能增大、减小或几乎不改变 $r$，所以必须说明删除依据并展示敏感性分析。
+
+\subsection{最小二乘直线}
+
+对预测式 $\hat y_i=b_0+b_1x_i$，残差为
+\[
+e_i=y_i-\hat y_i.
+\]
+普通最小二乘选择 $b_0,b_1$，使残差平方和
+\[
+\operatorname{SSE}=\sum_{i=1}^{n} e_i^2
+\]
+最小。SSE 属于回归内容，\textbf{不是概率公理}。残差图应围绕零随机散布；曲线形态、扇形扩散或异常点提示线性模型可能不合适。
+
+\section{分布、区间估计与假设检验}
+
+\subsection{正态分布}
+
+$X\sim N(\mu,\sigma^2)$ 表示均值为 $\mu$、方差为 $\sigma^2$ 的正态分布。其密度曲线关于 $\mu$ 对称，均值、中位数与众数相同。不是所有钟形数据都可自动视作正态；应结合图形、样本量、离群值与方法对偏离正态的稳健性判断。
+
+\subsection{置信区间 Confidence interval}
+
+典型区间写成
+\[
+\text{estimate}\ \pm\ \text{critical value}\times\text{standard error}.
+\]
+在重复抽样的频率学派解释中，若每次都用同一套程序构造 95\% 置信区间，长期来看约 95\% 的区间会覆盖固定的真实参数。某一次区间算出后，参数不是以 95\% 概率在其中随机移动。
+
+\begin{exam}{解释一个 95\% 置信区间}
+“我们使用的区间构造方法在重复抽样中有 95\% 的长期覆盖率。对本次样本，得到参数的合理取值范围为 [下限, 上限]。”
+再结合语境写清参数是什么、总体是谁。
+\end{exam}
+
+其他条件相同，样本量增大通常使标准误变小、区间变窄；置信水平提高会让临界值变大、区间变宽。偏差不会因为区间很窄而消失。
+
+\subsection{假设、\texorpdfstring{$p$}{p} 值与决策}
+
+\textbf{零假设 $H_0$}是关于总体参数的具体基准陈述，例如 $H_0:p=p_0$；
+\textbf{备择假设 $H_A$}描述与研究问题一致的另一种参数范围，如 $p\ne p_0$、$p>p_0$ 或 $p<p_0$。
+
+$p$ 值是在 $H_0$ 及检验模型成立的前提下，观察到\textbf{至少同样极端}数据或检验统计量的概率。它不是 $H_0$ 为真的概率，也不是结果由“纯随机”造成的概率。
+
+给定显著性水平 $\alpha$：若 $p<\alpha$，拒绝 $H_0$；若 $p\geq\alpha$，未能拒绝 $H_0$。后者不等于接受或证明 $H_0$，也不能自动拒绝备择假设。
+
+\begin{exam}{用语境写检验结论}
+“在显著性水平 $\alpha$ 下，数据提供了足够证据支持 [备择假设所表达的总体结论]。”
+或：“数据没有提供足够证据支持 [备择结论]。”
+不要写“确认 $H_A$”或“证明没有差异”。
+\end{exam}
+
+\section{常见推断方法的条件}
+
+任何公式之前先检查：样本如何取得、观测是否近似独立、变量类型是否匹配、样本量或分布条件是否合理。
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash\bfseries\color{Blue}}p{31mm}Y Y}
+\toprule
+任务 & 常用方法与核心条件 & 不满足时 \\
+\midrule
+单个比例 & 比例的正态近似区间或 $z$ 检验；随机/代表性样本、近似独立，成功与失败的期望计数要足够大。 & 考虑精确二项方法或模拟；仍需讨论抽样偏差。 \\
+单个均值 & $t$ 区间或 $t$ 检验；数值变量、近似独立。小样本时尤其要检查强偏态和离群值；大样本下对温和非正态较稳健。 & 变换、稳健/非参数方法或重抽样；解释目标参数是否改变。 \\
+两个类别变量 & 卡方独立性/同质性检验；计数数据、独立观测，期望格数不能过小。 & 合并有意义的类别，或考虑 Fisher 精确检验等方法。 \\
+数值线性关系 & 相关或线性回归；散点图近似线性，独立观测；推断时还需残差方差与分布条件。 & 非线性模型、分层或变换；不要只报告 $r$。 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{trapbox}{“样本量够大”不是通行证}
+大样本可改善某些正态近似并减小标准误，但不会自动带来代表性、独立性、正确测量、正确模型或因果识别。
+\end{trapbox}
+
+\clearpage
+\section{考前决策清单}\label{sec:checklist}
+
+\begin{methodbox}{看到一道数据题，按六步走}
+\begin{enumerate}
+  \item \textbf{对象}：总体、样本、观测单位和变量分别是什么？
+  \item \textbf{设计}：概率抽样还是便利/志愿样本？观察性研究还是随机实验？
+  \item \textbf{质量}：覆盖、不回应、测量、混杂和离群值有哪些风险？
+  \item \textbf{描述}：变量类型决定用比例、均值/中位数、SD/IQR 或哪种图。
+  \item \textbf{方法}：参数、假设、检验方向与方法条件是否匹配？
+  \item \textbf{结论}：区分关联与因果；区分样本结果与总体推广；写出不确定性和限制。
+\end{enumerate}
+\end{methodbox}
+
+\subsection*{十个一眼排雷句}
+
+\begin{enumerate}
+  \item 抽样框越大越好。\hfill\textcolor{Red}{错误：关键是准确覆盖。}
+  \item 大样本可以消除选择偏差。\hfill\textcolor{Red}{错误：只会让偏差估得更精确。}
+  \item 随机分派保证两组人数和特征完全相同。\hfill\textcolor{Red}{错误：只在随机机制下平均平衡。}
+  \item IQR = 0 说明所有值相同。\hfill\textcolor{Red}{错误：中间 50\% 相同即可发生。}
+  \item Simpson's paradox 要求多数分组反转。\hfill\textcolor{Red}{错误：定义没有“多数”条件。}
+  \item 对变量乘任意常数都不改变相关系数。\hfill\textcolor{Red}{错误：负数会变号，零使其未定义。}
+  \item $r=0$ 表示完全没有关系。\hfill\textcolor{Red}{错误：只表示没有线性关联。}
+  \item 95\% CI 表示参数有 95\% 概率在本次区间内。\hfill\textcolor{Red}{频率学派下错误。}
+  \item $p$ 值是 $H_0$ 为真的概率。\hfill\textcolor{Red}{错误。}
+  \item $p\geq\alpha$ 证明没有效应。\hfill\textcolor{Red}{错误：只是未能拒绝 $H_0$。}
+\end{enumerate}
+
+\section*{资料来源与版本说明}
+\addcontentsline{toc}{section}{资料来源与版本说明}
+
+本讲义为独立重排与改写，覆盖用户提供的 AY2022/23 速查表主题，并纠正其中定义、条件和解释上的问题。它不是 NUS 官方讲义，也不复制来源 PDF 的水印、批注或个人资料。
+
+主要核对来源：
+\begin{itemize}
+  \item National University of Singapore, \href{https://nus.edu.sg/registrar/academic-information-policies/undergraduate-students/general-education/data-literacy-pillar}{Data Literacy Pillar and GEA1000 course description}，访问于 2026-07-15。
+  \item Diez, Barr, and Çetinkaya-Rundel, \href{https://www.openintro.org/book/os/}{OpenIntro Statistics, 4th edition}，用于抽样、研究设计、描述统计、概率、回归和推断概念的交叉核对。
+\end{itemize}
+
+\vfill
+{\footnotesize\color{Ink!70}
+版本：2026-07-15。课程安排、术语约定与考核范围可能变化，请同时核对当学期 Canvas、讲义与教师说明。}
+
+\end{document}

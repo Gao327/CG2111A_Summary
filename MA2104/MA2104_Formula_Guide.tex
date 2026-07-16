@@ -1,0 +1,773 @@
+\documentclass[UTF8,a4paper,10pt,fontset=fandol]{ctexart}
+
+\usepackage[margin=16mm,top=18mm,bottom=18mm,headheight=14pt]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs,tabularx,array,multicol}
+\usepackage{enumitem}
+\usepackage{needspace}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,positioning,patterns,decorations.markings}
+\usepackage[most]{tcolorbox}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{microtype}
+
+\definecolor{navy}{HTML}{173B57}
+\definecolor{blue}{HTML}{2D6A9F}
+\definecolor{teal}{HTML}{17837B}
+\definecolor{orange}{HTML}{D36B32}
+\definecolor{red}{HTML}{B44343}
+\definecolor{ink}{HTML}{24313A}
+\definecolor{muted}{HTML}{66757F}
+\definecolor{paperblue}{HTML}{F2F7FA}
+\definecolor{paperteal}{HTML}{F1F8F7}
+\definecolor{paperorange}{HTML}{FFF7F0}
+\definecolor{paperred}{HTML}{FFF3F3}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=navy,
+  urlcolor=blue,
+  pdftitle={MA2104 Multivariable Calculus Formula Guide},
+  pdfauthor={Re-typeset and corrected study guide}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textcolor{navy}{MA2104 多元微积分}}
+\rhead{\textcolor{muted}{由概念到公式}}
+\cfoot{\textcolor{muted}{\thepage}}
+\renewcommand{\headrulewidth}{0.3pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3.5pt}
+\setlist[itemize]{leftmargin=1.4em,itemsep=2pt,topsep=2pt}
+\setlist[enumerate]{leftmargin=1.65em,itemsep=2pt,topsep=2pt}
+\renewcommand{\arraystretch}{1.18}
+
+\titleformat{\section}
+  {\Large\bfseries\color{navy}}{}{0pt}{}
+\titleformat{\subsection}
+  {\large\bfseries\color{blue}}{}{0pt}{}
+
+\newtcolorbox{concept}[1][]{
+  enhanced,breakable,colback=paperblue,colframe=blue,
+  boxrule=0.6pt,arc=2mm,left=2.5mm,right=2.5mm,top=1.8mm,bottom=1.8mm,
+  fonttitle=\bfseries,title={#1}
+}
+\newtcolorbox{condition}[1][]{
+  enhanced,breakable,colback=paperorange,colframe=orange,
+  boxrule=0.6pt,arc=2mm,left=2.5mm,right=2.5mm,top=1.8mm,bottom=1.8mm,
+  fonttitle=\bfseries,title={#1}
+}
+\newtcolorbox{warning}[1][]{
+  enhanced,breakable,colback=paperred,colframe=red,
+  boxrule=0.6pt,arc=2mm,left=2.5mm,right=2.5mm,top=1.8mm,bottom=1.8mm,
+  fonttitle=\bfseries,title={#1}
+}
+\newtcolorbox{formula}[1][]{
+  enhanced,breakable,colback=paperteal,colframe=teal,
+  boxrule=0.6pt,arc=2mm,left=2.5mm,right=2.5mm,top=1.8mm,bottom=1.8mm,
+  fonttitle=\bfseries,title={#1}
+}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\dd}{\,\mathrm{d}}
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\divergence}{\operatorname{div}}
+\newcommand{\curl}{\operatorname{curl}}
+
+\begin{document}
+
+\begin{tcolorbox}[
+  enhanced,colback=navy,colframe=navy,arc=3mm,boxrule=0pt,
+  left=6mm,right=6mm,top=7mm,bottom=6mm
+]
+{\color{white}\fontsize{23}{26}\selectfont\bfseries MA2104 多元微积分公式讲义}\par
+\vspace{2mm}
+{\color{white!88}\large Multivariable Calculus: concepts, conditions, and exam-ready formulas}\par
+\vspace{4mm}
+{\color{white!78}\small 重新排版与校正版 \quad A4 可打印 \quad 公式与图形均为矢量内容}
+\end{tcolorbox}
+
+\begin{concept}[怎么使用这份讲义]
+本讲义不是把公式压到最小，而是按依赖关系排列：
+\[
+\text{曲线与曲面}
+\longrightarrow \text{极限与可微}
+\longrightarrow \text{梯度与优化}
+\longrightarrow \text{多重积分}
+\longrightarrow \text{线积分与面积分}
+\longrightarrow \text{Green/Gauss/Stokes}.
+\]
+每个大公式旁边都有适用条件。考试时先判断对象、区域和方向，再选公式；不要只凭公式外形作答。
+\end{concept}
+
+\begin{multicols}{2}
+\textbf{符号约定}
+\begin{itemize}
+  \item $\vect r(t)$: 参数曲线；$\vect r_u,\vect r_v$: 曲面切向量。
+  \item $\nabla f$: 梯度；$\vect n$: 单位法向量。
+  \item $\dd s$: 弧长元素；$\dd S$: 曲面面积元素。
+  \item $\partial D$: 平面区域 $D$ 的边界；$\partial E$: 立体 $E$ 的闭边界。
+\end{itemize}
+
+\columnbreak
+\textbf{答题前四问}
+\begin{enumerate}
+  \item 积分对象是标量还是向量？
+  \item 曲线或曲面是否有指定方向？
+  \item 区域是否闭合、单连通、分片光滑？
+  \item 偏导数的连续性是否足以调用所需定理？
+\end{enumerate}
+\end{multicols}
+
+\tableofcontents
+\newpage
+
+\section{向量值函数与空间曲线}
+
+令
+\[
+\vect r(t)=\langle f(t),g(t),h(t)\rangle,
+\qquad a\le t\le b.
+\]
+极限、连续性和求导都按分量进行：
+\[
+\vect r'(t)=\langle f'(t),g'(t),h'(t)\rangle,
+\qquad
+\int_a^b\vect r(t)\dd t
+=\left\langle
+\int_a^bf(t)\dd t,
+\int_a^bg(t)\dd t,
+\int_a^bh(t)\dd t
+\right\rangle.
+\]
+
+\begin{formula}[速度、单位切向量与弧长]
+当 $\vect r'(t)\ne \vect 0$ 时，速度与单位切向量为
+\[
+v(t)=\norm{\vect r'(t)},
+\qquad
+\vect T(t)=\frac{\vect r'(t)}{\norm{\vect r'(t)}}.
+\]
+从 $t=a$ 到 $t=b$ 的弧长为
+\[
+L=\int_a^b\norm{\vect r'(t)}\dd t
+=\int_a^b\sqrt{(f')^2+(g')^2+(h')^2}\dd t.
+\]
+\end{formula}
+
+\begin{condition}[先检查正则性]
+若需要单位切向量、法线或曲线方向，通常要求参数化分片光滑，并且相关区间内 $\vect r'(t)\ne \vect 0$。改变参数方向会改变向量线积分的符号，但不会改变标量弧长积分。
+\end{condition}
+
+\section{二次曲面与常用坐标}
+
+\subsection{一般二次式与标准形}
+
+三变量的一般二次方程包括平方项、交叉项、一次项和常数项：
+\[
+Ax^2+By^2+Cz^2+2Dxy+2Exz+2Fyz+Gx+Hy+Iz+J=0.
+\]
+经过平移与旋转后，非退化情形可化为标准形。下面列的是\textbf{标准形}，不是完整的一般式。
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{34mm} >{\centering\arraybackslash}p{66mm} X}
+\toprule
+曲面 & 标准形示例 & 快速识别 \\
+\midrule
+椭球 Ellipsoid
+& $\dfrac{x^2}{a^2}+\dfrac{y^2}{b^2}+\dfrac{z^2}{c^2}=1$
+& 三个平方项同号，截面有界。 \\
+椭圆抛物面
+& $\dfrac{x^2}{a^2}+\dfrac{y^2}{b^2}=\dfrac{z}{c}$
+& 水平截面为椭圆，单向开口。 \\
+双曲抛物面
+& $\dfrac{x^2}{a^2}-\dfrac{y^2}{b^2}=\dfrac{z}{c}$
+& 两组相反开口，形似鞍面。 \\
+椭圆锥面
+& $\dfrac{x^2}{a^2}+\dfrac{y^2}{b^2}-\dfrac{z^2}{c^2}=0$
+& 齐次二次式，两个锥叶在顶点相接。 \\
+单叶双曲面
+& $\dfrac{x^2}{a^2}+\dfrac{y^2}{b^2}-\dfrac{z^2}{c^2}=1$
+& 两正一负，右边为 $1$；中心截面存在。 \\
+双叶双曲面
+& $-\dfrac{x^2}{a^2}-\dfrac{y^2}{b^2}+\dfrac{z^2}{c^2}=1$
+& 一个正项，两个负项；中间断开。 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{warning}[关于“缺一个变量就是柱面”]
+方程不含某个变量时，沿该变量方向的截面相同，\textbf{在非退化且定义域允许的情况下}形成柱面。例如 $x^2+y^2=1$ 是沿 $z$ 轴的圆柱面。但 $x^2+y^2=-1$ 在实数中没有点，$x^2=0$ 则退化为平面，不能把这句话当作无条件规则。
+\end{warning}
+
+\subsection{TikZ 自绘曲面速识图}
+
+\begin{center}
+\begin{tikzpicture}[x=1cm,y=1cm,line cap=round,line join=round]
+  \begin{scope}[shift={(0,0)}]
+    \draw[blue,thick] (0,0) ellipse (.92 and 1.6);
+    \draw[blue,dashed] (-1.25,0) arc[start angle=180,end angle=360,x radius=1.25,y radius=.48];
+    \draw[blue,thick] (1.25,0) arc[start angle=0,end angle=180,x radius=1.25,y radius=.48];
+    \node[below=17mm] at (0,0) {椭球};
+  \end{scope}
+
+  \begin{scope}[shift={(3.6,0)}]
+    \draw[teal,thick] (0,1.05) ellipse (1.2 and .35);
+    \draw[teal,dashed] (0,.15) ellipse (.78 and .23);
+    \draw[teal,thick] (0,-1.3) .. controls (-.25,-.75) and (-.7,.35) .. (-1.2,1.05);
+    \draw[teal,thick] (0,-1.3) .. controls (.25,-.75) and (.7,.35) .. (1.2,1.05);
+    \node[below=17mm] at (0,0) {椭圆抛物面};
+  \end{scope}
+
+  \begin{scope}[shift={(7.2,0)}]
+    \draw[orange,thick] (-1.25,-1.0) parabola bend (0,.55) (1.25,-1.0);
+    \draw[orange,thick] (-1.25,1.0) parabola bend (0,-.55) (1.25,1.0);
+    \draw[orange,dashed] (-1.3,0)--(1.3,0);
+    \node[below=17mm] at (0,0) {双曲抛物面};
+  \end{scope}
+
+  \begin{scope}[shift={(10.8,0)}]
+    \draw[red,thick] (0,0)--(-1.25,1.35);
+    \draw[red,thick] (0,0)--(1.25,1.35);
+    \draw[red,thick] (0,0)--(-1.25,-1.35);
+    \draw[red,thick] (0,0)--(1.25,-1.35);
+    \draw[red,thick] (0,1.35) ellipse (1.25 and .32);
+    \draw[red,thick] (0,-1.35) ellipse (1.25 and .32);
+    \node[below=17mm] at (0,0) {椭圆锥面};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+
+\subsection{直角、柱面与球面坐标}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{25mm} X X}
+\toprule
+坐标系 & 变换 & 体积元与常用范围 \\
+\midrule
+柱面坐标
+& $x=r\cos\theta$, $y=r\sin\theta$, $z=z$
+& $\dd V=r\dd z\dd r\dd\theta$；$r\ge0$，常取 $0\le\theta<2\pi$。 \\
+球面坐标
+& $x=\rho\sin\phi\cos\theta$, $y=\rho\sin\phi\sin\theta$, $z=\rho\cos\phi$
+& $\dd V=\rho^2\sin\phi\dd\rho\dd\phi\dd\theta$；$\rho\ge0$，$0\le\phi\le\pi$。 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+从直角坐标恢复角度时，应使用
+\[
+\theta=\operatorname{atan2}(y,x),
+\]
+而不是只用 $\arctan(y/x)$。前者能区分象限，也能处理 $x=0$ 的情形。
+
+\section{多变量极限、连续与可微}
+
+\subsection{极限与连续}
+
+\begin{concept}[二维极限的定义]
+\[
+\lim_{(x,y)\to(a,b)}f(x,y)=L
+\]
+表示：对任意 $\varepsilon>0$，存在 $\delta>0$，使得
+\[
+0<\sqrt{(x-a)^2+(y-b)^2}<\delta
+\quad\Longrightarrow\quad
+|f(x,y)-L|<\varepsilon.
+\]
+$f$ 在 $(a,b)$ 连续，当且仅当该极限存在且等于 $f(a,b)$。
+\end{concept}
+
+\begin{multicols}{2}
+\textbf{证明极限不存在}
+
+找两条趋向同一点的路径，若得到不同极限，则总极限不存在。两条路径给出相同结果\textbf{不能}证明总极限存在。
+
+\columnbreak
+\textbf{证明极限存在}
+
+优先尝试代数估计、极坐标或夹逼定理。若
+\[
+|f(x,y)-L|\le g(x,y),
+\qquad g(x,y)\to0,
+\]
+则 $f(x,y)\to L$。
+\end{multicols}
+
+\Needspace{20\baselineskip}
+\subsection{可微与线性近似}
+
+在点 $(a,b)$ 令 $\Delta x=x-a$、$\Delta y=y-b$。函数 $f$ 在 $(a,b)$ 可微，意味着
+\[
+f(a+\Delta x,b+\Delta y)-f(a,b)
+=f_x(a,b)\Delta x+f_y(a,b)\Delta y+R,
+\]
+且余项满足
+\[
+\frac{R}{\sqrt{(\Delta x)^2+(\Delta y)^2}}\longrightarrow0.
+\]
+因此线性近似为
+\[
+L(x,y)=f(a,b)+f_x(a,b)(x-a)+f_y(a,b)(y-b).
+\]
+
+\begin{warning}[最容易混淆的逻辑]
+\begin{itemize}
+  \item 若 $f_x,f_y$ 在 $(a,b)$ 的某个邻域存在，并在 $(a,b)$ 连续，则 $f$ 在 $(a,b)$ 可微。这是常用的\textbf{充分条件}。
+  \item 上述条件不是必要条件：可微函数的偏导数不一定在该点连续。
+  \item 只有偏导数存在，甚至再加上 $f$ 连续，也仍不足以推出可微。
+  \item 可微一定推出连续，也一定推出该点的各偏导数存在。
+\end{itemize}
+\end{warning}
+
+\subsection{链式法则与隐式求导}
+
+若 $z=f(x,y)$，$x=x(t)$，$y=y(t)$，则
+\[
+\frac{\dd z}{\dd t}=f_x\frac{\dd x}{\dd t}+f_y\frac{\dd y}{\dd t}.
+\]
+一般地，$u=u(x_1,\ldots,x_n)$ 且 $x_j=x_j(t_1,\ldots,t_m)$ 时，
+\[
+\pd{u}{t_i}=\sum_{j=1}^n\pd{u}{x_j}\pd{x_j}{t_i}.
+\]
+
+若 $F(x,y,z)=0$ 在局部定义 $z=z(x,y)$，且 $F_z\ne0$，则
+\[
+z_x=-\frac{F_x}{F_z},
+\qquad
+z_y=-\frac{F_y}{F_z}.
+\]
+
+\section{梯度、方向导数与切平面}
+
+梯度
+\[
+\nabla f=\langle f_x,f_y\rangle
+\quad\text{或}\quad
+\nabla f=\langle f_x,f_y,f_z\rangle
+\]
+同时编码方向与变化率。
+
+\begin{formula}[方向导数]
+若 $\vect u$ 是单位向量，并且 $f$ 可微，则
+\[
+D_{\vect u}f(\vect a)=\nabla f(\vect a)\cdot\vect u.
+\]
+若 $\nabla f(\vect a)\ne\vect0$，最大上升的单位方向为
+$\nabla f(\vect a)/\norm{\nabla f(\vect a)}$，最大方向导数为
+$\norm{\nabla f(\vect a)}$；最大下降单位方向取其相反方向，对应方向导数
+$-\norm{\nabla f(\vect a)}$。若 $\nabla f(\vect a)=\vect0$，则所有单位方向的一阶方向导数均为 $0$，没有唯一的最大方向。
+\end{formula}
+
+\begin{condition}[方向必须归一化]
+如果题目给出方向向量 $\vect v\ne\vect0$，先令 $\vect u=\vect v/\norm{\vect v}$。直接计算 $\nabla f\cdot\vect v$ 会多出长度因子。
+\end{condition}
+
+\subsection{图像曲面的切平面}
+
+对 $z=f(x,y)$，在 $(a,b,f(a,b))$ 处：
+\[
+z=f(a,b)+f_x(a,b)(x-a)+f_y(a,b)(y-b).
+\]
+一个法向量是 $\langle f_x(a,b),f_y(a,b),-1\rangle$。
+
+\subsection{等值曲面与法线}
+
+对等值曲面 $F(x,y,z)=k$，若 $\nabla F(\vect p)\ne\vect0$，则 $\nabla F(\vect p)$ 垂直于曲面：
+\[
+\nabla F(\vect p)\cdot\langle x-x_0,y-y_0,z-z_0\rangle=0.
+\]
+法线可写成
+\[
+\vect r(t)=\vect p+t\nabla F(\vect p).
+\]
+
+\section{局部与绝对极值}
+
+\subsection{二阶导数判别}
+
+内部临界点通常满足 $f_x=f_y=0$，或偏导数不存在。定义
+\[
+D=f_{xx}f_{yy}-(f_{xy})^2.
+\]
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+条件 & 结论 & 解释 \\
+\midrule
+$D>0$ 且 $f_{xx}>0$ & 局部极小 & 两个主方向都向上 \\
+$D>0$ 且 $f_{xx}<0$ & 局部极大 & 两个主方向都向下 \\
+$D<0$ & 鞍点 & 不同方向一升一降 \\
+$D=0$ & 判别不确定 & 必须换方法分析 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warning}[不要漏掉 $D=0$]
+$D=0$ 不代表“没有极值”，也不代表“存在极值”。例如 $x^4+y^4$ 在原点有极小值，而 $x^4-y^4$ 在原点是鞍点；两者的二阶判别都给 $D=0$。
+\end{warning}
+
+\subsection{有界闭区域上的绝对极值}
+
+若 $f$ 在紧集 $D$ 上连续，则最大值和最小值一定取得。标准流程：
+\begin{enumerate}
+  \item 求 $D$ 内部的临界点；
+  \item 在每段边界上降维求极值，并检查角点或端点；
+  \item 比较所有候选点的函数值。
+\end{enumerate}
+
+\subsection{Lagrange 乘子}
+
+在约束 $g(x,y)=c$ 下寻找 $f$ 的极值，若约束曲线在候选点光滑且 $\nabla g\ne\vect0$，则
+\[
+\nabla f=\lambda\nabla g,
+\qquad
+g=c.
+\]
+对多个独立约束，需要多个乘子。Lagrange 方程给出候选点，仍需比较函数值，并单独检查约束不光滑或 $\nabla g=0$ 的点。
+
+\Needspace{8\baselineskip}
+\section{多重积分与变量替换}
+
+\subsection{二重积分与积分次序}
+
+对 Type I 区域
+\[
+D=\{(x,y):a\le x\le b,\ g_1(x)\le y\le g_2(x)\},
+\]
+有
+\[
+\iint_D f(x,y)\dd A
+=\int_a^b\int_{g_1(x)}^{g_2(x)}f(x,y)\dd y\dd x.
+\]
+Type II 区域则先固定 $y$，再给 $x$ 的上下界。换序时必须重新画投影并重写边界，不能只交换 $\dd x$、$\dd y$。
+
+\subsection{三重积分的三类投影}
+
+若立体投影到 $xy$ 平面最自然，写成
+\[
+E=\{(x,y,z):(x,y)\in D,\ u_1(x,y)\le z\le u_2(x,y)\},
+\]
+则
+\[
+\iiint_E f\dd V
+=\iint_D\left(\int_{u_1}^{u_2}f(x,y,z)\dd z\right)\dd A.
+\]
+同理也可以投影到 $yz$ 或 $xz$ 平面。选择能让边界最简单的投影方向。
+
+\subsection{Jacobian 变量替换}
+
+若 $x=x(u,v)$、$y=y(u,v)$，则
+\[
+\iint_D f(x,y)\dd A
+=\iint_S f(x(u,v),y(u,v))
+\left|\frac{\partial(x,y)}{\partial(u,v)}\right|\dd u\dd v,
+\]
+其中
+\[
+\frac{\partial(x,y)}{\partial(u,v)}
+=\begin{vmatrix}x_u&x_v\\y_u&y_v\end{vmatrix}.
+\]
+三维时使用 $3\times3$ Jacobian 行列式，并取绝对值。
+
+\begin{condition}[变量替换的适用条件]
+在积分区域内部，变换应至少为 $C^1$，在分块后近似一一对应，并且 Jacobian 不在大面积区域内为零。若变换多对一，必须分区或修正重数。
+\end{condition}
+
+\Needspace{28\baselineskip}
+\section{线积分与保守场}
+
+设曲线 $C$ 由 $\vect r(t)$，$a\le t\le b$ 参数化。
+
+\begin{formula}[标量线积分]
+\[
+\int_C f\dd s
+=\int_a^b f(\vect r(t))\norm{\vect r'(t)}\dd t.
+\]
+它对反向参数化不变。
+\end{formula}
+
+\begin{formula}[向量线积分与功]
+对 $\vect F=\langle P,Q,R\rangle$，
+\[
+\int_C\vect F\cdot\dd\vect r
+=\int_a^b\vect F(\vect r(t))\cdot\vect r'(t)\dd t
+=\int_C P\dd x+Q\dd y+R\dd z.
+\]
+反向曲线会使结果变号。
+\end{formula}
+
+\subsection{保守场与线积分基本定理}
+
+若 $\vect F=\nabla\phi$，则 $\phi$ 是势函数，且
+\[
+\int_C\vect F\cdot\dd\vect r=\phi(B)-\phi(A).
+\]
+因此在同一连通区域内，积分只与端点有关；任何闭曲线积分为 $0$。
+
+\begin{condition}[“curl 为零”何时足够]
+\begin{itemize}
+  \item 在二维，若 $P,Q$ 有连续一阶偏导，且定义域开、单连通，则 $P_y=Q_x$ 可推出 $\langle P,Q\rangle$ 保守。
+  \item 在三维，对具有连续一阶偏导的场，在开、单连通区域内，$\nabla\times\vect F=\vect0$ 可推出保守。
+  \item 若区域有洞，仅有 curl 为零可能不够；必须检查定义域拓扑。
+\end{itemize}
+\end{condition}
+
+\subsection{Green 定理}
+
+设 $D$ 为有界平面区域，$C=\partial D$ 由有限条分片光滑简单闭曲线组成，并按正向定向：外边界逆时针，内洞边界顺时针。若 $P,Q$ 在包含 $D$ 的开集上有连续一阶偏导，则
+\[
+\oint_C P\dd x+Q\dd y
+=\iint_D(Q_x-P_y)\dd A.
+\]
+
+面积公式为
+\[
+\operatorname{Area}(D)
+=\oint_C x\dd y
+=-\oint_C y\dd x
+=\frac12\oint_C(x\dd y-y\dd x).
+\]
+
+\begin{center}
+\begin{tikzpicture}[scale=.9,>=Latex]
+  \fill[paperteal] plot[smooth cycle,tension=.85] coordinates {(-2,0) (-1.2,1.2) (.5,1.35) (2,.3) (1.6,-1) (-.3,-1.3) (-1.8,-.8)};
+  \draw[teal,thick,postaction={decorate},decoration={markings,mark=at position .18 with {\arrow{Latex}},mark=at position .64 with {\arrow{Latex}}}]
+    plot[smooth cycle,tension=.85] coordinates {(-2,0) (-1.2,1.2) (.5,1.35) (2,.3) (1.6,-1) (-.3,-1.3) (-1.8,-.8)};
+  \node at (0,0) {$D$};
+  \node[teal] at (2.45,.45) {$C=\partial D$};
+  \node[below=7mm,text=muted] at (0,-1.3) {正向：行进时区域位于左侧};
+\end{tikzpicture}
+\end{center}
+
+\section{参数曲面与面积分}
+
+\subsection{参数化、面积与定向}
+
+曲面由
+\[
+\vect r(u,v)=\langle x(u,v),y(u,v),z(u,v)\rangle,
+\qquad (u,v)\in D
+\]
+参数化。若 $\vect r_u\times\vect r_v\ne\vect0$，则
+\[
+\dd S=\norm{\vect r_u\times\vect r_v}\dd u\dd v.
+\]
+
+标量面积分：
+\[
+\iint_S f\dd S
+=\iint_D f(\vect r(u,v))\norm{\vect r_u\times\vect r_v}\dd u\dd v.
+\]
+向量通量积分：
+\[
+\iint_S\vect F\cdot\vect n\dd S
+=\iint_D\vect F(\vect r(u,v))\cdot(\vect r_u\times\vect r_v)\dd u\dd v,
+\]
+其中叉积方向必须与指定定向一致；若相反，整体乘以 $-1$。
+
+\subsection{\texorpdfstring{图像曲面 $z=g(x,y)$}{图像曲面 z=g(x,y)}}
+
+取 $\vect r(x,y)=\langle x,y,g(x,y)\rangle$，则
+\[
+\vect r_x\times\vect r_y=\langle-g_x,-g_y,1\rangle,
+\qquad
+\dd S=\sqrt{1+g_x^2+g_y^2}\dd A.
+\]
+上向法向量与 $\langle-g_x,-g_y,1\rangle$ 同向；下向法向量取相反方向。
+
+\begin{center}
+\begin{tikzpicture}[scale=.95,>=Latex]
+  \fill[paperblue] (-2,-.65) .. controls (-1.2,.65) and (.8,.85) .. (2,.2)
+    -- (1.7,1.1) .. controls (.5,1.65) and (-1.1,1.4) .. (-2.2,.25) -- cycle;
+  \draw[blue,thick] (-2,-.65) .. controls (-1.2,.65) and (.8,.85) .. (2,.2);
+  \draw[blue,thick] (-2.2,.25) .. controls (-1.1,1.4) and (.5,1.65) .. (1.7,1.1);
+  \draw[blue,thick] (-2,-.65)--(-2.2,.25);
+  \draw[blue,thick] (2,.2)--(1.7,1.1);
+  \coordinate (P) at (0,.72);
+  \fill (P) circle (1.3pt) node[below right] {$P$};
+  \draw[red,very thick,->] (P)--++(.4,1.45) node[above] {$\vect n$};
+  \draw[teal,thick,->] (P)--++(1.2,.35) node[right] {$\vect r_u$};
+  \draw[orange,thick,->] (P)--++(-.9,.55) node[left] {$\vect r_v$};
+  \node[text=muted] at (0,-1.2) {右手定则决定边界方向与法向量的配对};
+\end{tikzpicture}
+\end{center}
+
+\section{散度、旋度与积分定理}
+
+对 $\vect F=\langle P,Q,R\rangle$，
+\[
+\nabla\cdot\vect F=P_x+Q_y+R_z,
+\]
+\[
+\nabla\times\vect F
+=\left\langle R_y-Q_z,\ P_z-R_x,\ Q_x-P_y\right\rangle.
+\]
+
+\subsection{Gauss 散度定理}
+
+设 $E$ 是有界立体，边界 $S=\partial E$ 为闭合、分片光滑曲面，并取\textbf{向外}单位法向量。若 $\vect F$ 在包含 $E$ 的开集上有连续一阶偏导，则
+\[
+\boxed{\iint_{\partial E}\vect F\cdot\vect n\dd S
+=\iiint_E\nabla\cdot\vect F\dd V.}
+\]
+
+\begin{warning}[“向外法向量”只属于闭边界语境]
+开放曲面没有统一的“向外”概念，必须明确写上向、下向或由边界方向诱导的法向。Gauss 定理中的 outward normal 专指闭立体 $E$ 的边界 $\partial E$。
+\end{warning}
+
+\subsection{Stokes 定理}
+
+设定向曲面 $S$ 分片光滑，边界 $C=\partial S$ 分片光滑，并按右手定则与 $\vect n$ 相容。若 $\vect F$ 在包含 $S$ 的开集上有连续一阶偏导，则
+\[
+\boxed{\oint_C\vect F\cdot\dd\vect r
+=\iint_S(\nabla\times\vect F)\cdot\vect n\dd S.}
+\]
+只要边界 $C$ 与方向不变，可把 $S$ 换成更容易积分的、具有相同边界的曲面，但需确保场在两曲面之间相关区域内满足条件。
+
+\subsection{三大定理如何选}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\bfseries}p{24mm} >{\raggedright\arraybackslash}p{37mm} >{\raggedright\arraybackslash}p{42mm} >{\raggedright\arraybackslash}X}
+\toprule
+定理 & 左侧对象 & 右侧对象 & 关键条件与方向 \\
+\midrule
+Green
+& 平面闭曲线积分
+& 平面区域二重积分
+& 分片光滑定向闭边界；正向；$P,Q$ 的一阶偏导连续。 \\
+Gauss
+& 闭曲面的通量
+& 立体上的散度三重积分
+& 曲面必须闭合；法向向外；场 $C^1$。 \\
+Stokes
+& 空间闭曲线环流
+& 任一跨界曲面上的旋度通量
+& 边界与法向按右手定则配对；场 $C^1$。 \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{formula}[选择顺序]
+\begin{enumerate}
+  \item 看到闭曲面通量：先想 Gauss。
+  \item 看到空间闭曲线环流：先想 Stokes。
+  \item 看到平面闭曲线：Green 往往最直接。
+  \item 看到保守场或端点固定：先找势函数，用线积分基本定理。
+  \item 定理不能直接套用时，回到参数化定义。
+\end{enumerate}
+\end{formula}
+
+\section{高频公式附录}
+
+\subsection{单变量导数}
+
+\begin{multicols}{2}
+\[
+\begin{aligned}
+(u^n)'&=nu^{n-1}u',\\
+(e^u)'&=e^u u',\\
+(a^u)'&=a^u\ln(a)u',\\
+(\ln|u|)'&=\frac{u'}u,\\
+(\sin u)'&=\cos u\,u',\\
+(\cos u)'&=-\sin u\,u',\\
+(\tan u)'&=\sec^2u\,u'.
+\end{aligned}
+\]
+
+\columnbreak
+\[
+\begin{aligned}
+(uv)'&=u'v+uv',\\
+\left(\frac uv\right)'&=\frac{u'v-uv'}{v^2},\\
+(\arcsin u)'&=\frac{u'}{\sqrt{1-u^2}},\\
+(\arctan u)'&=\frac{u'}{1+u^2},\\
+(\operatorname{arcsec}u)'&=\frac{u'}{|u|\sqrt{u^2-1}}.
+\end{aligned}
+\]
+\end{multicols}
+
+\Needspace{12\baselineskip}
+\subsection{三角恒等式}
+
+\begin{multicols}{2}
+\[
+\sin^2x+\cos^2x=1,
+\qquad
+1+\tan^2x=\sec^2x,
+\]
+\[
+\begin{aligned}
+\sin(a\pm b)&=\sin a\cos b\pm\cos a\sin b,\\
+\cos(a\pm b)&=\cos a\cos b\mp\sin a\sin b,\\
+\sin2x&=2\sin x\cos x,\\
+\cos2x&=\cos^2x-\sin^2x.
+\end{aligned}
+\]
+
+\columnbreak
+\[
+\begin{aligned}
+\sin a\sin b&=\tfrac12[\cos(a-b)-\cos(a+b)],\\
+\cos a\cos b&=\tfrac12[\cos(a-b)+\cos(a+b)],\\
+\sin a\cos b&=\tfrac12[\sin(a+b)+\sin(a-b)].
+\end{aligned}
+\]
+\end{multicols}
+
+\begin{center}
+\begin{tabular}{c|ccccc}
+\toprule
+$\theta$ & $0$ & $\pi/6$ & $\pi/4$ & $\pi/3$ & $\pi/2$ \\
+\midrule
+$\sin\theta$ & $0$ & $1/2$ & $\sqrt2/2$ & $\sqrt3/2$ & $1$ \\
+$\cos\theta$ & $1$ & $\sqrt3/2$ & $\sqrt2/2$ & $1/2$ & $0$ \\
+$\tan\theta$ & $0$ & $1/\sqrt3$ & $1$ & $\sqrt3$ & 未定义 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{一页式检查清单}
+
+\begin{multicols}{2}
+\begin{concept}[微分与优化]
+\begin{itemize}
+  \item 可微 $\Rightarrow$ 连续与偏导存在。
+  \item 邻域内偏导存在且在点连续 $\Rightarrow$ 可微。
+  \item 方向导数前先单位化方向。
+  \item 二阶判别中 $D=0$：结论不确定。
+  \item 绝对极值要检查内部、边界、角点。
+  \item Lagrange 候选点仍要比较函数值。
+\end{itemize}
+\end{concept}
+
+\columnbreak
+\begin{condition}[积分与定理]
+\begin{itemize}
+  \item 换序要重新写区域；换元要乘 $|J|$。
+  \item 球面体积元含 $\rho^2\sin\phi$。
+  \item 标量线积分不随反向变号；向量线积分会。
+  \item Green：平面闭边界与正向。
+  \item Gauss：闭曲面与向外法向。
+  \item Stokes：法向与边界按右手定则配对。
+\end{itemize}
+\end{condition}
+\end{multicols}
+
+\begin{warning}[最后一分钟自检]
+答案中若出现 $\vect n$、$\dd\vect r$、$\dd S$ 或 Jacobian，请主动写出方向、参数范围、区域和绝对值。很多失分不是微积分本身，而是漏掉这些条件。
+\end{warning}
+
+\section*{版本说明与来源}
+本讲义按用户提供的 \href{https://github.com/Gao327/NUS-Computer-Engineering}{Gao327/NUS-Computer-Engineering} 仓库中 \texttt{MA2104 Cheatsheet.pdf} 的知识范围重新排版，并对数学表述作了校正。所有示意图均由本文件中的 TikZ 代码生成，没有复制原 PDF 中的截图。主要校正包括：可微的充分条件不写成充要条件；补全一般二次式；加入 $D=0$ 的不确定情形；限定“缺变量形成柱面”的适用范围；加入 $\operatorname{atan2}$；补全 Green、Gauss、Stokes 的区域、光滑性与方向条件。
+
+\vfill
+{\small\color{muted}本资料用于复习与自检，不替代课程讲义、教学大纲或老师对符号约定的说明。}
+
+\end{document}
