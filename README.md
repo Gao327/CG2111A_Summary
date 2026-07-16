@@ -16,7 +16,18 @@ Currently all materials are under the same branch.
 - **GEA1000 Cheatsheet** (edited from internet resources)
 - **MA2104 Cheatsheet**
 
-### Future Update by Dec 2024:
+### Verified editions — 17 July 2026
+
+The original files above remain at the repository root. The following folders contain revised editions prepared as incremental, independently editable study aids:
+
+- [CG2111A](CG2111A/): the original illustrated notes with targeted corrections; all 33 screenshots are retained.
+- [CS1010](CS1010/): an English, concept-first PE preparation guide in Word format.
+- [GEA1000](GEA1000/): independently rewritten LaTeX notes, compiled PDF, build script, and provenance record.
+- [MA2104](MA2104/): re-typeset LaTeX formula guide with TikZ diagrams and a compiled PDF.
+
+These are unofficial supplementary materials. Check the current semester's official module materials for assessed scope, APIs, notation, and administrative details. CS2107 is unchanged in this revision.
+
+### Original roadmap (December 2024):
 - **EE2026 Notes**
 - **CS2113 Notes**
 - **MA2116 Notes (can be used for MA2334)**

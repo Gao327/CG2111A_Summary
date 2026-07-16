@@ -1,0 +1,19 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+~$*
+
+/output/
+/tmp/
+**/tmp/
+
+*.aux
+*.log
+*.out
+*.toc
+
+# Local editorial and validation workspaces; final artifacts are listed in the course folders.
+/CG2111A/CG2111A_revised_notes.md
+/CS1010/generate_cs1010_guide.py
+/CS1010/render_cs1010.sh
+/CS1010/validation/
