@@ -1,0 +1,106 @@
+% Additional vector figures for classical models.
+
+\newcommand{\DecisionTreeLifecycleFigure}{%
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  split/.style={draw=Blue,rounded corners,fill=PaleBlue,align=center,
+    minimum width=16mm,minimum height=7mm,inner xsep=2mm,font=\scriptsize},
+  leaf/.style={draw=Teal,rounded corners,fill=PaleTeal,align=center,
+    minimum width=15mm,minimum height=7mm,inner xsep=2mm,font=\scriptsize},
+  weak/.style={draw=Orange,rounded corners,fill=PaleOrange,align=center,
+    minimum width=15mm,minimum height=7mm,inner xsep=2mm,font=\scriptsize},
+  edge/.style={-{Latex[length=1.7mm]},semithick,color=Ink!70},
+  stage/.style={font=\small\bfseries,color=Navy}
+]
+% Stage 1: one greedy split.
+\node[stage] at (0,2.55) {1. Split};
+\node[split] (a0) at (0,1.65) {$x_1\le t_1$};
+\node[leaf] (a1) at (-0.95,0.45) {mostly $-$};
+\node[weak] (a2) at (0.95,0.45) {mixed};
+\draw[edge] (a0)--node[left,font=\tiny]{yes}(a1);
+\draw[edge] (a0)--node[right,font=\tiny]{no}(a2);
+
+% Stage 2: recursively split eligible non-pure children.
+\node[stage] at (5.25,2.55) {2. Grow recursively};
+\node[split] (b0) at (5.25,1.65) {$x_1\le t_1$};
+\node[split] (b1) at (4.10,0.45) {$x_2\le t_2$};
+\node[weak] (b2) at (6.40,0.45) {$x_3\le t_3$};
+\node[leaf] (b11) at (3.45,-0.75) {$-$};
+\node[leaf] (b12) at (4.75,-0.75) {$+$};
+\node[weak] (b21) at (5.75,-0.75) {$-$};
+\node[weak] (b22) at (7.05,-0.75) {$+$};
+\draw[edge] (b0)--(b1); \draw[edge] (b0)--(b2);
+\draw[edge] (b1)--(b11); \draw[edge] (b1)--(b12);
+\draw[edge] (b2)--(b21); \draw[edge] (b2)--(b22);
+\node[draw=Orange,dashed,rounded corners,fit=(b2)(b21)(b22),
+  inner sep=2mm] (weaksubtree) {};
+
+% Stage 3: collapse a weak subtree after validation.
+\node[stage] at (11.25,2.55) {3. Prune};
+\node[split] (c0) at (11.25,1.65) {$x_1\le t_1$};
+\node[split] (c1) at (10.20,0.45) {$x_2\le t_2$};
+\node[weak] (c2) at (12.30,0.45) {leaf $+$};
+\node[leaf] (c11) at (9.55,-0.75) {$-$};
+\node[leaf] (c12) at (10.85,-0.75) {$+$};
+\draw[edge] (c0)--(c1); \draw[edge] (c0)--(c2);
+\draw[edge] (c1)--(c11); \draw[edge] (c1)--(c12);
+
+\draw[-{Latex[length=2mm]},thick,Blue]
+  (1.55,1.25)--node[above,font=\scriptsize,color=Ink]{reduce impurity}(3.10,1.25);
+\draw[-{Latex[length=2mm]},thick,Orange]
+  (7.75,1.25)--node[above,font=\scriptsize,color=Ink]{validate complexity}(9.35,1.25);
+\end{tikzpicture}
+\caption{A tree chooses a locally useful split, recursively splits eligible non-pure children while the pre-pruning conditions permit further growth, and may then prune a branch whose added complexity is not supported by validation data. Pruning replaces the highlighted subtree by one leaf.}
+\label{fig:tree-growth-pruning}
+\end{figure}}
+
+\newcommand{\EnsembleWorkflowFigure}{%
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  source/.style={draw=Navy,rounded corners,fill=PaleBlue,align=center,
+    minimum width=16mm,minimum height=8mm,font=\scriptsize},
+  bag/.style={draw=Blue,rounded corners,fill=PaleBlue,align=center,
+    minimum width=18mm,minimum height=7mm,font=\scriptsize},
+  boost/.style={draw=Orange,rounded corners,fill=PaleOrange,align=center,
+    minimum width=18mm,minimum height=7mm,font=\scriptsize},
+  output/.style={draw=Teal,rounded corners,fill=PaleTeal,align=center,
+    minimum width=20mm,minimum height=8mm,font=\scriptsize},
+  arr/.style={-{Latex[length=1.8mm]},semithick,color=Ink!70},
+  lane/.style={font=\small\bfseries,color=Navy,anchor=west}
+]
+% Bagging and random-forest lane.
+\node[lane] at (-0.15,3.00) {Bagging / random forest};
+\node[source] (d1) at (0.75,1.55) {training\\data};
+\node[bag] (s1) at (3.20,2.25) {bootstrap $B_1$};
+\node[bag] (s2) at (3.20,1.55) {bootstrap $B_2$};
+\node[bag] (sm) at (3.20,0.85) {bootstrap $B_M$};
+\node[bag] (t1) at (6.10,2.25) {tree $T_1$};
+\node[bag] (t2) at (6.10,1.55) {tree $T_2$};
+\node[bag] (tm) at (6.10,0.85) {tree $T_M$};
+\node[output] (agg) at (9.10,1.55) {average\\or vote};
+\draw[arr] (d1)--(s1); \draw[arr] (d1)--(s2); \draw[arr] (d1)--(sm);
+\draw[arr] (s1)--(t1); \draw[arr] (s2)--(t2); \draw[arr] (sm)--(tm);
+\draw[arr] (t1)--(agg); \draw[arr] (t2)--(agg); \draw[arr] (tm)--(agg);
+\node[font=\tiny,color=Muted] at (6.10,0.20)
+  {RF: sample candidate features at each split};
+\node[font=\scriptsize,color=Teal,anchor=west,align=left] at (10.35,1.55)
+  {parallel\\variance reduction};
+
+% Boosting lane.
+\node[lane] at (-0.15,-0.35) {Gradient boosting};
+\node[source] (d2) at (0.75,-1.55) {training\\data};
+\node[boost] (h1) at (3.00,-1.55) {fit $h_1$};
+\node[boost] (r2) at (5.15,-1.55) {gradients\\from $F_1$};
+\node[boost] (h2) at (7.30,-1.55) {fit $h_2$};
+\node[boost] (more) at (9.35,-1.55) {$\cdots$};
+\node[output] (sum) at (11.45,-1.55) {weighted\\sum};
+\draw[arr] (d2)--(h1); \draw[arr] (h1)--(r2); \draw[arr] (r2)--(h2);
+\draw[arr] (h2)--(more); \draw[arr] (more)--(sum);
+\node[font=\scriptsize,color=Orange,anchor=west,align=left] at (12.65,-1.55)
+  {sequential\\error correction};
+\end{tikzpicture}
+\caption{Bagging fits learners independently on bootstrap samples and aggregates their predictions; a random forest additionally randomises candidate features at each split. Boosting is sequential: each learner follows the loss gradients of the current additive model.}
+\label{fig:ensemble-workflows}
+\end{figure}}

@@ -1,0 +1,637 @@
+\input{figures_learning_extra}
+
+\section{Learning Model Parameters}
+
+A model specifies a family of functions indexed by parameters $\vect\theta$.
+Training selects one function from this family. Section~\ref{sec:risk-workflow}
+defines population and empirical risk and explains why training fit alone does
+not measure generalisation. Here the observations are assumed iid and drawn from
+the deployment distribution unless stated otherwise; time dependence, grouping,
+or distribution shift requires a different split and error analysis.
+
+\subsection{Empirical Risk and Regularisation}
+
+Regularised training adds a parameter preference to empirical risk:
+\[
+  J(\vect\theta)
+  =\widehat R_n(\vect\theta)+\lambda\Omega(\vect\theta),
+  \qquad \lambda\geq 0.
+\]
+The penalty $\Omega$ restricts effective model complexity, while $\lambda$ controls its strength relative to data fit.
+
+\subsection{Least Squares and the Normal Equations}
+\label{sec:least-squares}
+
+For linear regression, let $X\in\R^{n\times d}$ have row $\vect x_i^{\top}$ and let $\vect y=(y_1,\ldots,y_n)^{\top}\in\R^n$. To include an intercept, define
+\[
+  \widetilde X=[\vect 1\;X]\in\R^{n\times(d+1)},
+  \qquad
+  \widetilde{\vect\theta}
+  =\begin{bmatrix}b\\\vect w\end{bmatrix}\in\R^{d+1}.
+\]
+Then $f(\vect x)=b+\vect w^{\top}\vect x$, and the mean squared error is
+\[
+  L(\widetilde{\vect\theta})
+  =\frac1n\norm{\widetilde X\widetilde{\vect\theta}-\vect y}_2^2.
+\]
+Expanding the quadratic gives
+\begin{align*}
+  L(\widetilde{\vect\theta})
+  &=\frac1n(\widetilde X\widetilde{\vect\theta}-\vect y)^{\top}
+    (\widetilde X\widetilde{\vect\theta}-\vect y)\\
+  &=\frac1n\left(
+      \widetilde{\vect\theta}^{\top}\widetilde X^{\top}\widetilde X
+      \widetilde{\vect\theta}
+      -2\widetilde{\vect\theta}^{\top}\widetilde X^{\top}\vect y
+      +\vect y^{\top}\vect y
+    \right),\\
+  \nabla_{\widetilde{\vect\theta}}L(\widetilde{\vect\theta})
+  &=\frac{2}{n}\widetilde X^{\top}
+    (\widetilde X\widetilde{\vect\theta}-\vect y).
+\end{align*}
+Setting the gradient to zero yields the normal equations
+\[
+  \widetilde X^{\top}\widetilde X\widehat{\widetilde{\vect\theta}}
+  =\widetilde X^{\top}\vect y.
+\]
+If $\widetilde X$ has full column rank, so that $\operatorname{rank}(\widetilde X)=d+1$, then $\widetilde X^{\top}\widetilde X$ is invertible and the unique solution is
+\[
+  \boxed{
+  \widehat{\widetilde{\vect\theta}}
+  =(\widetilde X^{\top}\widetilde X)^{-1}
+    \widetilde X^{\top}\vect y.}
+\]
+If $\widetilde X$ is rank deficient, the least-squares solution need not be unique and this inverse must not be used. The minimum-norm solution is $\widetilde X^{+}\vect y$, where $\widetilde X^{+}$ is the Moore--Penrose pseudoinverse. Ridge regularisation provides another remedy by making the system matrix invertible.
+
+\subsection{Gradient Descent, Mini-batches, and SGD}
+
+Closed-form solutions are available for only a limited class of objectives. A differentiable objective $J(\vect\theta)$ can instead be minimised iteratively. Gradient descent evaluates the gradient at the current iterate:
+\[
+  \boxed{
+  \vect\theta_{t+1}
+  =\vect\theta_t-\eta_t\nabla J(\vect\theta_t),}
+\]
+where $\eta_t>0$ is the learning rate. The negative gradient is the direction of steepest local decrease under the Euclidean norm because
+\[
+  J(\vect\theta_t+\Delta\vect\theta)
+  \approx J(\vect\theta_t)
+  +\nabla J(\vect\theta_t)^{\top}\Delta\vect\theta.
+\]
+The gradient is evaluated at $\vect\theta_t$, not at the unknown $\vect\theta_{t+1}$. A learning rate that is too large can overshoot low-loss regions or cause divergence; a learning rate that is too small gives slow progress.
+
+When the empirical objective decomposes as
+$J(\vect\theta)=n^{-1}\sum_i\ell_i(\vect\theta)$, a full-batch update reads every observation. For a randomly sampled mini-batch $B_t\subseteq\{1,\ldots,n\}$, define
+\[
+  \vect g_t
+  =\frac{1}{\abs{B_t}}
+    \sum_{i\in B_t}\nabla\ell_i(\vect\theta_t),
+  \qquad
+  \vect\theta_{t+1}=\vect\theta_t-\eta_t\vect g_t.
+\]
+Under uniform sampling,
+\[
+  \E[\vect g_t\mid\vect\theta_t]=\nabla J(\vect\theta_t).
+\]
+The case $\abs{B_t}=1$ is stochastic gradient descent (SGD); values between $1$ and $n$ give mini-batch gradient descent. Small batches reduce the cost of an update but produce a noisier gradient estimate. Large batches give a more stable direction at a higher per-update cost. Stochastic updates can sometimes move away from flat saddle regions, but they do not guarantee a global optimum.
+
+\OptimisationPathFigure
+
+For an $L$-smooth convex objective, full-batch gradient descent converges in objective value under the fixed-step condition $0<\eta<2/L$. Convergence claims for SGD additionally require assumptions on sampling, gradient variance, and usually a decreasing step schedule. Neural-network objectives are generally non-convex; optimisation then seeks a low-loss stationary region, while validation measures generalisation.
+
+\subsection{Maximum Likelihood Estimation}
+
+A probabilistic model specifies a conditional distribution $p_{\vect\theta}(y\mid\vect x)$. Conditional independence of the labels gives the likelihood
+\[
+  p_{\vect\theta}(\vect y\mid X)
+  =\prod_{i=1}^{n}p_{\vect\theta}(y_i\mid\vect x_i).
+\]
+Maximum likelihood estimation (MLE) is equivalent to minimising negative log-likelihood:
+\begin{align*}
+  \widehat{\vect\theta}_{\mathrm{MLE}}
+  &\in\argmax_{\vect\theta}
+    \prod_{i=1}^{n}p_{\vect\theta}(y_i\mid\vect x_i)\\
+  &=\argmin_{\vect\theta}
+    \left[-\sum_{i=1}^{n}\log p_{\vect\theta}(y_i\mid\vect x_i)\right].
+\end{align*}
+The logarithm turns a product into a sum and avoids numerical underflow from multiplying many small probabilities.
+
+Squared error follows from a Gaussian noise model. Assume
+\[
+  y_i=f_{\vect\theta}(\vect x_i)+\varepsilon_i,
+  \qquad
+  \varepsilon_i\overset{\mathrm{iid}}{\sim}\mathcal N(0,\sigma^2),
+\]
+with a variance that does not depend on $\vect x_i$. Then
+\[
+  -\log p_{\vect\theta}(\vect y\mid X)
+  =\frac n2\log(2\pi\sigma^2)
+   +\frac{1}{2\sigma^2}
+      \sum_{i=1}^{n}
+      \bigl(y_i-f_{\vect\theta}(\vect x_i)\bigr)^2.
+\]
+For fixed $\sigma^2$, the first term is constant in $\vect\theta$, and the positive scale of the second term does not change its minimiser. MLE under independent homoscedastic Gaussian noise therefore gives the same estimate as least squares. If the conditional variance changes with the input, ordinary MSE is no longer the complete negative log-likelihood.
+
+\subsection{MAP Estimation and Regularisation}
+
+Maximum a posteriori estimation (MAP) places a prior distribution $p(\vect\theta)$ on the parameters:
+\begin{align*}
+  \widehat{\vect\theta}_{\mathrm{MAP}}
+  &\in\argmax_{\vect\theta}p(\vect\theta\mid\mathcal D)\\
+  &=\argmax_{\vect\theta}
+    \left[\log p(\mathcal D\mid\vect\theta)+\log p(\vect\theta)\right].
+\end{align*}
+The evidence $p(\mathcal D)$ is independent of $\vect\theta$ and therefore does not affect the maximiser.
+
+Suppose the parameter components are independent and follow zero-mean Gaussian priors:
+\[
+  \theta_j\sim\mathcal N(0,\tau^2),
+  \qquad
+  -\log p(\vect\theta)
+  =\frac{1}{2\tau^2}\norm{\vect\theta}_2^2+\text{constant}.
+\]
+The resulting MAP objective has an $L_2$ penalty. Independent Laplace priors instead give
+\[
+  p(\theta_j)=\frac{1}{2b}
+    \exp\!\left(-\frac{\abs{\theta_j}}{b}\right),
+  \qquad
+  -\log p(\vect\theta)
+  =\frac1b\norm{\vect\theta}_1+\text{constant},
+\]
+which produces an $L_1$ penalty. The regularisation coefficient depends on both the likelihood scale and the prior scale. Replacing a summed loss by a mean loss also changes the corresponding numerical value of $\lambda$.
+
+These correspondences require the stated independent, zero-centred priors. The intercept is commonly left unregularised because an overall shift should not be treated as a feature effect. MAP returns the posterior mode; it does not retain the uncertainty represented by the full posterior distribution.
+
+
+\section{Generalisation, Regularisation, and Model Selection}
+
+A training algorithm observes a finite sample but must predict on new inputs. Generalisation analysis treats the training set itself as random. Different samples produce different fitted functions, so test error contains systematic bias, sensitivity to the training sample, and noise in the data-generating process.
+
+\subsection{Bias--Variance--Noise Decomposition}
+
+Consider regression with squared loss. Define the regression function and conditional noise variance by
+\[
+  f^*(\vect x)=\E[Y\mid X=\vect x],
+  \qquad
+  \sigma^2(\vect x)=\Var(Y\mid X=\vect x).
+\]
+Equivalently,
+\[
+  Y=f^*(\vect x)+\varepsilon,
+  \qquad
+  \E[\varepsilon\mid\vect x]=0,
+  \qquad
+  \Var(\varepsilon\mid\vect x)=\sigma^2(\vect x).
+\]
+Let a random training set $\mathcal D$ produce the fitted function $\widehat f_{\mathcal D}$, and define its average prediction over possible training sets by
+\[
+  \overline f(\vect x)
+  =\E_{\mathcal D}[\widehat f_{\mathcal D}(\vect x)].
+\]
+At a fixed input $\vect x$, the expected test error is
+\begin{align*}
+  &\E_{\mathcal D,Y\mid\vect x}
+    \left[\bigl(\widehat f_{\mathcal D}(\vect x)-Y\bigr)^2\right]\\
+  &=\E_{\mathcal D,Y\mid\vect x}
+    \left[\bigl(
+      \widehat f_{\mathcal D}(\vect x)-f^*(\vect x)-\varepsilon
+    \bigr)^2\right]\\
+  &=\E_{\mathcal D}
+    \left[\bigl(
+      \widehat f_{\mathcal D}(\vect x)-f^*(\vect x)
+    \bigr)^2\right]
+    +\sigma^2(\vect x).
+\end{align*}
+The cross term vanishes because $\E[\varepsilon\mid\vect x]=0$ and test-label noise is independent of the training set. Add and subtract $\overline f(\vect x)$ in the remaining expectation:
+\begin{align*}
+  &\E_{\mathcal D}
+    \left[\bigl(
+      \widehat f_{\mathcal D}(\vect x)-f^*(\vect x)
+    \bigr)^2\right]\\
+  &=\E_{\mathcal D}\left[
+    \bigl(
+      \widehat f_{\mathcal D}(\vect x)-\overline f(\vect x)
+      +\overline f(\vect x)-f^*(\vect x)
+    \bigr)^2\right]\\
+  &=\underbrace{
+      \E_{\mathcal D}\left[
+        \bigl(
+          \widehat f_{\mathcal D}(\vect x)-\overline f(\vect x)
+        \bigr)^2
+      \right]
+    }_{\text{variance}}
+    +\underbrace{
+      \bigl(\overline f(\vect x)-f^*(\vect x)\bigr)^2
+    }_{\text{squared bias}}.
+\end{align*}
+The second cross term is zero because
+$\E_{\mathcal D}[\widehat f_{\mathcal D}(\vect x)-\overline f(\vect x)]=0$. Hence
+\[
+  \boxed{
+  \E_{\mathcal D,Y\mid\vect x}
+  \left[\bigl(\widehat f_{\mathcal D}(\vect x)-Y\bigr)^2\right]
+  =\operatorname{Bias}^2(\vect x)
+   +\Var_{\mathcal D}\!\left(\widehat f_{\mathcal D}(\vect x)\right)
+   +\sigma^2(\vect x).}
+\]
+Taking an additional expectation over $X$ gives the decomposition of the overall test MSE. Bias measures the systematic difference between the average prediction and $f^*$. Variance measures sensitivity to the sampled training set. The term $\sigma^2(\vect x)$ is irreducible when predicting an individual response under squared loss. Bias is not irreducible noise. This exact identity is specific to squared loss; the same terms are used only qualitatively for most classification losses.
+
+Increasing model flexibility often reduces bias and increases variance, but this is not a theorem that applies pointwise to every model family. The shape of the trade-off also depends on the optimiser, regularisation, and data distribution.
+
+\BiasVarianceFigure
+
+\subsection{\texorpdfstring{$L_1$ and $L_2$ Geometry}{L1 and L2 Geometry}}
+
+Two common regularised objectives are
+\[
+  \min_{\vect\theta}
+    \widehat R_n(\vect\theta)+\lambda\norm{\vect\theta}_2^2,
+  \qquad
+  \min_{\vect\theta}
+    \widehat R_n(\vect\theta)+\lambda\norm{\vect\theta}_1.
+\]
+The $L_2$ penalty is smooth and encourages a smaller coefficient norm. In ridge regression, individual coordinates need not decrease monotonically when features are correlated. The penalty does not, by geometry alone, make many coefficients exactly zero. The $L_1$ ball has corners on the coordinate axes. A loss contour that first touches this boundary often does so at a corner, which produces a sparse solution. The $L_1$ norm is non-differentiable when a coordinate is zero, but it is convex and can be optimised with subgradients or coordinate descent.
+
+\RegularisationGeometryFigure
+
+The penalised and constrained forms are
+\[
+  \min_{\vect\theta}
+    \widehat R_n(\vect\theta)+\lambda\Omega(\vect\theta),
+  \qquad
+  \min_{\vect\theta}\widehat R_n(\vect\theta)
+  \quad\text{subject to}\quad
+  \Omega(\vect\theta)\leq C.
+\]
+Under convexity, feasibility, and strong-duality conditions, a solution to the penalised problem corresponds to a constrained problem with
+$C=\Omega(\widehat{\vect\theta})$. The mapping between $C$ and $\lambda$ need not be one-to-one, and the relation is not generally $C=1/\lambda$.
+
+For ridge regression, use the augmented quantities above and define
+$D=\diag(0,1,\ldots,1)$ so that the intercept is not penalised. The objective
+\[
+  J(\widetilde{\vect\theta})
+  =\frac1n\norm{\widetilde X\widetilde{\vect\theta}-\vect y}_2^2
+   +\lambda\widetilde{\vect\theta}^{\top}D\widetilde{\vect\theta}
+\]
+has gradient
+\[
+  \nabla J(\widetilde{\vect\theta})
+  =\frac2n\widetilde X^{\top}
+    (\widetilde X\widetilde{\vect\theta}-\vect y)
+   +2\lambda D\widetilde{\vect\theta}.
+\]
+Setting it to zero gives
+\[
+  \boxed{
+  \widehat{\widetilde{\vect\theta}}_{\mathrm{ridge}}
+  =(\widetilde X^{\top}\widetilde X+n\lambda D)^{-1}
+    \widetilde X^{\top}\vect y.}
+\]
+For $\lambda>0$ and $n>0$, $\widetilde X^{\top}\widetilde X+n\lambda D$ is positive definite and invertible: the data term identifies the intercept, while the penalty is positive on every non-zero slope vector.
+
+\subsection{Holdout Validation}
+
+Development data are commonly divided into a training set and a validation set, with a separate test set reserved for final evaluation. For each hyperparameter setting $h$, fit $\widehat f_h$ on the training set and compute
+\[
+  \widehat L_{\mathrm{val}}(h)
+  =\frac1m\sum_{i=1}^{m}
+    \ell\bigl(
+      y_i^{\mathrm{val}},
+      \widehat f_h(\vect x_i^{\mathrm{val}})
+    \bigr).
+\]
+After selecting $h$, the model may be refitted on the combined training and validation data. The test set is then evaluated once; it must not be used for further tuning.
+
+Suppose $h$ and the fitted model are fixed before validation, the validation observations are iid, and the per-example loss has conditional variance $\sigma_\ell^2$. Define the risk of this fixed fit as $R(\widehat f_h)$. Conditional on the training data,
+\[
+  \E[\widehat L_{\mathrm{val}}(h)\mid\mathcal D_{\mathrm{train}}]
+  =R(\widehat f_h),
+  \qquad
+  \Var(\widehat L_{\mathrm{val}}(h)\mid\mathcal D_{\mathrm{train}})
+  =\frac{\sigma_\ell^2}{m}.
+\]
+The standard error therefore decreases at rate $m^{-1/2}$. The notation $O(m^{-1/2})$ describes a scale of sampling fluctuation, not a deterministic identity of the form
+$\widehat L_{\mathrm{val}}=L\pm O(m^{-1/2})$. If the same validation set selects among many hyperparameter settings, the smallest observed validation loss is subject to selection bias and cannot replace an independent test estimate.
+
+\subsection{\texorpdfstring{$K$-Fold Cross-Validation}{K-Fold Cross-Validation}}
+
+Partition the development data into disjoint folds $F_1,\ldots,F_K$. For fold $k$, fit $\widehat f_h^{(-k)}$ on the other $K-1$ folds and evaluate on $F_k$:
+\[
+  \widehat L_{\mathrm{CV}}(h)
+  =\frac1K\sum_{k=1}^{K}
+    \frac{1}{\abs{F_k}}
+    \sum_{i\in F_k}
+      \ell\bigl(y_i,\widehat f_h^{(-k)}(\vect x_i)\bigr).
+\]
+Each observation serves as validation data once. This procedure directly evaluates fits trained on approximately $\frac{K-1}{K}n$ observations, not the final model refitted on all development data.
+
+Stratified folds preserve approximate class proportions in classification. Time-series observations must not be randomly shuffled; forward-chaining folds prevent future observations from predicting the past. If model selection and an approximately unbiased performance estimate are both required, nested cross-validation uses inner folds for selection and outer folds for evaluation.
+
+\subsection{Early Stopping}
+
+During iterative training, the training loss can continue to decrease after the validation loss begins to rise. If $\vect\theta_t$ denotes the parameters after update $t$, the stopping time can be selected by
+\[
+  t^*\in\argmin_t
+    \widehat L_{\mathrm{val}}(\vect\theta_t),
+  \qquad
+  \widehat{\vect\theta}=\vect\theta_{t^*}.
+\]
+Training should restore the parameters from the best validation checkpoint rather than keep only the parameters at the final update. A patience window tolerates short fluctuations caused by mini-batch noise. Since the number of updates is selected through validation performance, early stopping is a form of model selection and implicit regularisation. The test set must not be monitored after every epoch.
+
+\subsection{Correlation in Model Averaging}
+
+Let $f_1,\ldots,f_K$ be base-model predictions at a fixed input, with average
+\[
+  \overline f_K=\frac1K\sum_{k=1}^{K}f_k.
+\]
+In general,
+\[
+  \Var(\overline f_K)
+  =\frac{1}{K^2}
+    \left(
+      \sum_{k=1}^{K}\Var(f_k)
+      +2\sum_{i<j}\Cov(f_i,f_j)
+    \right).
+\]
+If every model has variance $\sigma_f^2$ and every pair has correlation $\rho$,
+this reduces to Equation~\eqref{eq:correlated-ensemble-variance}. Variance falls
+as $1/K$ only when $\rho=0$; for $\rho>0$, its limit is $\rho\sigma_f^2$.
+Random forests randomise candidate features partly to reduce correlation among
+trees. Averaging does not automatically reduce bias; bagging mainly reduces
+variance for unstable learners.
+
+\section{Model Evaluation and Class Imbalance}
+
+An evaluation metric is meaningful only after the task, positive class, and decision costs have been specified. Define evaluation metrics before inspecting test results, and select decision thresholds on validation data.
+
+\subsection{The Confusion Matrix and Basic Metrics}
+
+For a positive class $Y=1$, the four counts are true positives $TP$, false positives $FP$, false negatives $FN$, and true negatives $TN$. They define
+\begin{align*}
+  \mathrm{Accuracy}
+  &=\frac{TP+TN}{TP+TN+FP+FN},\\
+  \mathrm{Precision}
+  &=\frac{TP}{TP+FP},\\
+  \mathrm{Recall}=\mathrm{TPR}
+  &=\frac{TP}{TP+FN},\\
+  \mathrm{Specificity}
+  &=\frac{TN}{TN+FP},\\
+  F_1
+  &=\frac{2\,\mathrm{Precision}\cdot\mathrm{Recall}}
+          {\mathrm{Precision}+\mathrm{Recall}}
+    =\frac{2TP}{2TP+FP+FN}.
+\end{align*}
+Precision is the fraction of predicted positives that are correct. Recall is the fraction of positive examples that are correctly identified. The $F_1$ score is their harmonic mean and does not use $TN$. If a denominator is zero, software libraries may return zero, an undefined value, or a warning; a report should state the convention used.
+
+\begin{examplebox}[Accuracy under class imbalance]
+Consider a test set of $1000$ observations with only $60$ positives. If
+$TP=40$, $FP=10$, $FN=20$, and $TN=930$, then
+\[
+  \mathrm{Accuracy}=0.97,
+  \qquad
+  \mathrm{Precision}=0.80,
+  \qquad
+  \mathrm{Recall}=\frac23,
+  \qquad
+  F_1\approx0.727.
+\]
+The $97\%$ accuracy conceals that the classifier misses one third of the positive examples.
+\end{examplebox}
+
+\subsection{Decision Thresholds and Costs}
+
+Many classifiers first return a score $s(\vect x)$ or an estimated probability $\widehat p(Y=1\mid\vect x)$, then apply a threshold $\tau$:
+\[
+  \widehat y_\tau=\ind\{s(\vect x)\geq\tau\}.
+\]
+Lowering $\tau$ generally increases both $TP$ and $FP$. Recall therefore rises, while Precision may rise or fall. A threshold of $0.5$ is natural only under particular calibration and cost assumptions; it is not universally optimal.
+
+If a false negative costs $C_{\mathrm{FN}}$ and a false positive costs $C_{\mathrm{FP}}$, choose the threshold on validation data by minimising
+\[
+  C(\tau)
+  =C_{\mathrm{FN}}FN(\tau)+C_{\mathrm{FP}}FP(\tau).
+\]
+Ranking quality, probability calibration, and performance at a fixed threshold are distinct properties. AUC assesses ranking. Calibration curves or the Brier score assess probability calibration. Confusion-matrix metrics assess a particular decision rule.
+
+\subsection{ROC, Precision--Recall, and AUC}
+
+Varying $\tau$ gives
+\[
+  \mathrm{TPR}(\tau)
+  =\frac{TP(\tau)}{TP(\tau)+FN(\tau)},
+  \qquad
+  \mathrm{FPR}(\tau)
+  =\frac{FP(\tau)}{FP(\tau)+TN(\tau)}.
+\]
+The ROC curve plots TPR against FPR. AUROC is the area under this curve. For continuous scores, it is also the probability that a randomly selected positive receives a higher score than a randomly selected negative, with half credit for a tie. AUROC is unchanged by a strictly increasing transformation of the scores and does not assess probability calibration.
+
+The precision--recall (PR) curve plots Precision against Recall. The expected Precision of a random ranking equals the positive-class prevalence. Under severe class imbalance, the PR curve often shows the effect of false positives more directly than the ROC curve. AUPRC and AUROC both summarise ranking across thresholds; neither establishes that a particular deployment threshold meets a cost or recall requirement. Their numerical values are also not directly comparable across datasets with different class prevalence.
+
+\ThresholdEvaluationFigure
+
+\subsection{Macro and Micro Averaging}
+
+For $C$ classes, treat class $c$ as positive and all other classes as negative to obtain a class-specific metric $M_c$. Macro averaging weights classes equally:
+\[
+  M_{\mathrm{macro}}=\frac1C\sum_{c=1}^{C}M_c.
+\]
+It therefore exposes weak performance on rare classes. Weighted macro averaging uses class frequencies:
+\[
+  M_{\mathrm{weighted}}
+  =\sum_{c=1}^{C}\frac{n_c}{n}M_c.
+\]
+Micro averaging first pools the class-specific counts. For example,
+\[
+  \mathrm{Precision}_{\mathrm{micro}}
+  =\frac{\sum_c TP_c}{\sum_c(TP_c+FP_c)}.
+\]
+In single-label multiclass classification, where every observation has exactly one true and one predicted class, micro Precision, micro Recall, and micro $F_1$ all equal Accuracy. Macro averaging gives each class equal weight; micro averaging gives each observation equal weight.
+
+\subsection{Regression Metrics}
+
+Let $e_i=\widehat y_i-y_i$ be the residual. Common regression metrics are
+\begin{align*}
+  \mathrm{MAE}
+  &=\frac1n\sum_{i=1}^{n}\abs{e_i},\\
+  \mathrm{MSE}
+  &=\frac1n\sum_{i=1}^{n}e_i^2,\\
+  \mathrm{RMSE}
+  &=\sqrt{\frac1n\sum_{i=1}^{n}e_i^2},\\
+  R^2
+  &=1-\frac{\sum_i(y_i-\widehat y_i)^2}
+          {\sum_i(y_i-\overline y)^2}.
+\end{align*}
+MAE and RMSE have the same units as the target. MSE and RMSE penalise large residuals more strongly; MAE is less sensitive to outliers. The coefficient $R^2$ compares a model with the baseline that always predicts the sample mean, and it can be negative on unseen data. The appropriate metric depends on the error costs and noise structure.
+
+\subsection{Imbalanced Data and Training-Only Resampling}
+
+When the minority class is rare, Accuracy can be dominated by the majority class. Stratified sampling can preserve approximate class proportions across the training, validation, and test sets, unless time order or grouping imposes a stricter split. Training-time responses include class-weighted losses, undersampling, oversampling, and SMOTE.
+
+Undersampling discards some majority examples. It reduces computation but may remove useful information. Random oversampling duplicates minority examples. It retains the majority data but can overfit repeated observations. SMOTE selects nearby minority examples and interpolates in feature space:
+\[
+  \vect x_{\mathrm{new}}
+  =\vect x_i+\gamma(\vect x_j-\vect x_i),
+  \qquad
+  \gamma\sim\mathrm{Uniform}(0,1).
+\]
+This construction assumes that line segments in the feature space are meaningful. Direct application is inappropriate for untreated categorical features, tightly constrained variables, or neighbours whose connecting segment crosses a class boundary.
+
+\begin{correction}[Boundary for resampling]
+Split the data first, then resample only the training set. During cross-validation, fit scaling, neighbour searches, and SMOTE separately inside each training fold; leave the validation fold at its original distribution. Neither the validation set nor the test set should be resampled, separately or together with the training set. Doing so changes the evaluation distribution and leaks information into the fitted pipeline.
+\end{correction}
+
+Oversampling and class weighting alter the class prior seen during fitting, so the resulting scores need not remain calibrated probabilities. If deployment requires probabilities or a risk-based threshold, calibrate and select the threshold on an unresampled validation set.
+
+\section{Feature Representation and Dimensionality Reduction}
+
+Learning algorithms operate on numerical vectors, while raw observations may be table rows, time series, images, or text. A feature map
+\[
+  \phi:\mathcal X\rightarrow\R^d,
+  \qquad
+  \vect x=\phi(\text{raw observation})
+\]
+determines which differences are available to the model. Feature engineering constructs new variables, feature selection retains a subset of existing variables, and feature extraction changes the coordinate system. Any fitted part of these operations must use training data alone.
+
+\subsection{Consequences of High Dimension}
+
+Section~\ref{sec:knn-dimensionality} derives why neighbourhoods become sparse
+as dimension grows. Irrelevant variables can also add noise to distances and
+decision boundaries, but high dimension does not inevitably cause overfitting:
+effective dimension, regularisation, sample size, and structural assumptions all
+matter. Feature scaling and every other fitted transformation use training-set
+statistics, which are then applied unchanged to validation and test data.
+
+\subsection{Feature Selection}
+
+Filter methods score variables on the training set without repeatedly fitting the final predictor. For discrete variables, the mutual information between feature $X_j$ and label $Y$ is
+\[
+  I(X_j;Y)
+  =\sum_{x,y}p(x,y)
+    \log\frac{p(x,y)}{p(x)p(y)}.
+\]
+The value is zero when $X_j$ and $Y$ are independent, and a larger value indicates greater statistical dependence. Its estimate depends on sample size and, for continuous features, on the density or discretisation estimator. Removing highly correlated features can reduce redundancy, but two correlated variables may still contribute different predictive information. Correlation alone is not a sufficient deletion rule.
+
+Wrapper methods evaluate feature subsets through model validation. Recursive Feature Elimination repeatedly fits a model and removes its currently weakest feature. It is computationally expensive, and the entire selection procedure must remain inside each cross-validation training fold. Embedded methods perform selection during fitting; $L_1$ regularisation, for example, can set coefficients to zero. Any label-dependent selection performed before the train--validation split leaks label information into evaluation.
+
+\subsection{PCA: An Unsupervised Variance Objective}
+
+Let $X_c\in\R^{n\times d}$ be the centred data matrix, with sample covariance
+\[
+  S=\frac1nX_c^{\top}X_c.
+\]
+The first principal direction solves
+\[
+  \vect w_1
+  \in\argmax_{\norm{\vect w}_2=1}
+    \Var(X_c\vect w)
+  =\argmax_{\norm{\vect w}_2=1}
+    \vect w^{\top}S\vect w.
+\]
+Introduce a Lagrange multiplier:
+\[
+  \mathcal L(\vect w,\lambda)
+  =\vect w^{\top}S\vect w
+   -\lambda(\vect w^{\top}\vect w-1).
+\]
+The stationarity condition is
+\[
+  \nabla_{\vect w}\mathcal L=0
+  \quad\Longrightarrow\quad
+  S\vect w=\lambda\vect w.
+\]
+The objective value equals the eigenvalue, so $\vect w_1$ is an eigenvector associated with the largest eigenvalue. Subsequent directions maximise variance subject to orthogonality to the earlier directions. If
+$W_r=[\vect w_1,\ldots,\vect w_r]$ contains the top $r$ directions, the projected representation is
+\[
+  Z=X_cW_r\in\R^{n\times r}.
+\]
+The explained-variance ratio of these components is
+\[
+  \frac{\sum_{j=1}^{r}\lambda_j}
+       {\sum_{j=1}^{d}\lambda_j}.
+\]
+
+PCA does not use labels and preserves linear directions of large sample variance. Large variance need not be useful for classification. Features with large numerical scale can also dominate the covariance matrix, so the choice between centring alone and prior standardisation depends on units and the modelling objective. Principal components are uncorrelated under the sample covariance model; orthogonality does not imply statistical independence in general. The centre, scale, and projection matrix must all be fitted on the training set.
+
+\subsection{LDA: A Supervised Separation Objective}
+
+Suppose the training data contain $C$ classes. Let $n_c$ and $\vect\mu_c$ be the size and mean of class $c$, and let $\vect\mu$ be the overall mean. Define the within-class and between-class scatter matrices by
+\begin{align*}
+  S_W
+  &=\sum_{c=1}^{C}
+    \sum_{i:y_i=c}
+      (\vect x_i-\vect\mu_c)
+      (\vect x_i-\vect\mu_c)^{\top},\\
+  S_B
+  &=\sum_{c=1}^{C}
+    n_c(\vect\mu_c-\vect\mu)
+       (\vect\mu_c-\vect\mu)^{\top}.
+\end{align*}
+For a one-dimensional projection $z=\vect w^{\top}\vect x$, Fisher's objective is
+\[
+  J(\vect w)
+  =\frac{\vect w^{\top}S_B\vect w}
+         {\vect w^{\top}S_W\vect w}.
+\]
+Maximising this ratio separates projected class means while limiting the spread within each class. A stationary direction satisfies the generalised eigenvalue problem
+\[
+  S_B\vect w=\lambda S_W\vect w.
+\]
+A multidimensional projection uses the generalised eigenvectors with the largest eigenvalues. Since $\operatorname{rank}(S_B)\leq C-1$, LDA provides at most $C-1$ discriminative directions. In high-dimensional, small-sample settings, $S_W$ may be singular; replacing it by $S_W+\gamma I$ gives a regularised problem.
+
+PCA maximises overall variance, whereas LDA uses labels to maximise class separation. The objective above defines Fisher's dimensionality-reduction projection. Using LDA as a generative classifier adds the assumption that class-conditional distributions are approximately Gaussian with a shared covariance matrix.
+
+\PcaLdaFigure
+
+\subsection{Tabular and Temporal Features}
+
+Tabular modelling often joins records from several sources by entity and time. Useful aggregates include historical counts, sums, means, extrema, and elapsed times. Every aggregate must be available at the prediction time. A churn model predicting next month, for example, cannot use a transaction total that is finalised only after that month ends. Categorical variables can be one-hot encoded. High-cardinality features require explicit control of dimensionality, and the category dictionary must be built from training data.
+
+Time-series features often use lags and rolling statistics:
+\[
+  x_t^{(\mathrm{lag},k)}=y_{t-k},
+  \qquad
+  x_t^{(\mathrm{mean},w)}
+  =\frac1w\sum_{r=1}^{w}y_{t-r}.
+\]
+The window must end at $t-1$, or at the latest value genuinely available when the prediction is made. A periodic variable with period $T$ can be represented by
+\[
+  \sin\frac{2\pi t}{T},
+  \qquad
+  \cos\frac{2\pi t}{T},
+\]
+which places the start and end of the cycle next to each other in feature space. Validation for temporal data must preserve chronological order.
+
+\subsection{Image Features}
+
+A colour image is a tensor of shape $H\times W\times C$, with $C=3$ for RGB data. A global colour histogram records the frequency of colour ranges but discards their spatial locations. Edge features describe local changes in intensity. For a greyscale image $I$, horizontal and vertical differences can be estimated by discrete kernels:
+\[
+  G_x=K_x*I,
+  \qquad
+  G_y=K_y*I,
+  \qquad
+  M=\sqrt{G_x^2+G_y^2}.
+\]
+Thresholding $M$ produces an edge map. Direction histograms, regional statistics, or a lower-dimensional projection of the edge map can then serve as features. Hand-designed colour and edge descriptors encode explicit assumptions; convolutional networks learn local filters from the training objective. Both approaches must use normalisation parameters estimated from training images.
+
+\subsection{Text Features}
+
+Text is tokenised by a fixed rule, and the training corpus defines a vocabulary
+$V=\{v_1,\ldots,v_d\}$. Bag-of-Words represents document $D$ as a fixed-length vector:
+\[
+  x_j=\operatorname{count}(v_j,D),
+  \qquad j=1,\ldots,d.
+\]
+The entries may instead be binary indicators or normalised frequencies. This representation records which terms occur but discards word order.
+
+TF--IDF reduces the influence of terms that occur in many documents. Let the corpus contain $N$ documents and let $\operatorname{df}_j$ be the number containing term $v_j$. One smoothed convention is
+\begin{align*}
+  \operatorname{tf}_{dj}
+  &=\frac{\operatorname{count}(v_j,D_d)}
+          {\sum_k\operatorname{count}(v_k,D_d)},\\
+  \operatorname{idf}_j
+  &=\log\frac{N+1}{\operatorname{df}_j+1}+1,\\
+  x_{dj}
+  &=\operatorname{tf}_{dj}\operatorname{idf}_j.
+\end{align*}
+Textbooks and software packages use different conventions for term frequency, smoothing, and the logarithm base. These definitions must be checked before numerical values are compared.
+
+An $n$-gram treats a consecutive sequence of $n$ tokens as one term. Unigrams discard local order. Bigrams can distinguish phrases such as ``not good'' and ``good'', but they create a larger and sparser vocabulary. Stemming truncates word forms by rule; lemmatisation uses lexical or grammatical information to recover a base form. Stop-word removal is task dependent, since frequent terms such as negations can carry label information. The vocabulary, document frequencies, and filtering rules must be fitted on the training corpus only.

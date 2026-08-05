@@ -1,0 +1,653 @@
+\input{figures_neural_extra}
+
+\section{From the Perceptron to Multilayer Networks}
+\label{sec:mlp}
+
+A linear model reduces an input to a score and predicts from that score. A neural network retains the affine computation but composes several layers, placing a nonlinear function between successive affine transformations.
+
+\subsection{The perceptron as a single neuron}
+
+For binary labels $y\in\{-1,+1\}$, the perceptron computes
+\[
+    a(\mathbf{x})=\mathbf{w}^{\mathsf T}\mathbf{x}+b
+\]
+and applies a sign activation:
+\[
+    \widehat{y}=\operatorname{sign}\!\left(a(\mathbf{x})\right).
+\]
+Section~\ref{sec:perceptron} gives the update rule, loss, and convergence
+condition. As a network unit, the perceptron exposes the limitation that
+motivates hidden layers: a sign applied to one affine score still produces a
+linear decision boundary.
+
+\subsection{Multilayer perceptrons}
+
+In a multilayer perceptron (MLP), each hidden layer \(l\) first applies an affine transformation and then an elementwise activation function:
+\begin{align}
+    \mathbf{z}^{(l)}
+    &=\mathbf{W}^{(l)}\mathbf{a}^{(l-1)}+\mathbf{b}^{(l)},
+    \label{eq:mlp-affine}\\
+    \mathbf{a}^{(l)}
+    &=\phi^{(l)}\!\left(\mathbf{z}^{(l)}\right),
+    \label{eq:mlp-activation}
+\end{align}
+with \(\mathbf{a}^{(0)}=\mathbf{x}\). The vector \(\mathbf{z}^{(l)}\) contains the pre-activations of layer \(l\), and \(\mathbf{a}^{(l)}\) is its output.
+
+The nonlinear activation is essential. If every layer is affine, then two successive layers can still be written as one affine map:
+\[
+    \mathbf{W}^{(2)}
+    \bigl(\mathbf{W}^{(1)}\mathbf{x}+\mathbf{b}^{(1)}\bigr)
+    +\mathbf{b}^{(2)}
+    =\widetilde{\mathbf{W}}\mathbf{x}+\widetilde{\mathbf{b}}.
+\]
+Adding affine layers alone does not enlarge the class of functions represented by the model.
+
+On a compact input domain, a one-hidden-layer network with sufficient width and
+a suitable non-polynomial activation can approximate any continuous target
+function arbitrarily closely. This universal-approximation result is a statement
+about representational capacity; it does not guarantee an efficient width,
+successful optimisation, or generalisation beyond the training distribution.
+
+Common activation functions and their derivatives are
+\begin{align*}
+    \operatorname{sigmoid}(z)
+    &=\sigma(z)=\frac{1}{1+e^{-z}},
+    & \sigma'(z)&=\sigma(z)\bigl(1-\sigma(z)\bigr),\\
+    \tanh(z)
+    &=\frac{e^z-e^{-z}}{e^z+e^{-z}},
+    & \frac{\mathrm{d}}{\mathrm{d}z}\tanh(z)&=1-\tanh^2(z),\\
+    \operatorname{ReLU}(z)
+    &=\max\{0,z\},
+    & \operatorname{ReLU}'(z)&=
+    \begin{cases}
+        0,&z<0,\\
+        1,&z>0.
+    \end{cases}
+\end{align*}
+ReLU is not differentiable at \(z=0\); implementations select a conventional subgradient there, commonly zero. Sigmoid and \(\tanh\) are smooth but saturate for inputs of large magnitude. ReLU has derivative one on the positive half-line and zero on the negative half-line.
+
+\subsection{Output layers and loss functions}
+
+The output transformation and loss function must match the prediction task.
+
+\paragraph{Regression.}
+For a real-valued target, a linear output \(\widehat{\mathbf{y}}=\mathbf{z}\) can be paired with squared error:
+\[
+    \mathcal{L}_{\mathrm{MSE}}
+    =\frac{1}{2}\left\lVert
+    \widehat{\mathbf{y}}-\mathbf{y}
+    \right\rVert_2^2.
+\]
+The factor \(1/2\) simplifies the derivative and does not change the minimiser.
+
+\paragraph{Binary classification.}
+Let \(p=\sigma(z)\) denote the probability of the positive class and let \(y\in\{0,1\}\). The binary cross-entropy is
+\[
+    \mathcal{L}_{\mathrm{BCE}}
+    =-y\log p-(1-y)\log(1-p).
+\]
+
+\paragraph{Mutually exclusive multiclass classification.}
+If each sample belongs to exactly one of \(K\) classes, the output layer uses Softmax:
+\begin{equation}
+    p_k
+    =\frac{e^{z_k}}{\sum_{j=1}^{K}e^{z_j}},
+    \qquad k=1,\ldots,K.
+    \label{eq:softmax}
+\end{equation}
+The resulting values satisfy \(p_k\geq0\) and \(\sum_k p_k=1\). Stable implementations set \(m=\max_j z_j\) and evaluate Softmax using \(z_k-m\). This shift leaves the probabilities unchanged and prevents overflow in the exponential.
+
+For a one-hot target, or more generally for \(y_k\geq0\) and \(\sum_k y_k=1\), the multiclass cross-entropy is
+\begin{equation}
+    \mathcal{L}_{\mathrm{CE}}
+    =-\sum_{k=1}^{K}y_k\log p_k.
+    \label{eq:cross-entropy}
+\end{equation}
+
+\paragraph{Multilabel classification.}
+When several labels may be present simultaneously, the classes should not share one softmax normalisation. The model instead computes \(p_k=\sigma(z_k)\) independently for each class and sums the \(K\) binary cross-entropies.
+
+\ActivationCouplingFigure
+
+\subsection{The Softmax--cross-entropy gradient}
+
+The Jacobian of Softmax is
+\begin{equation}
+    \frac{\partial p_k}{\partial z_j}
+    =p_k\bigl(\mathbb{I}[k=j]-p_j\bigr),
+    \label{eq:softmax-jacobian}
+\end{equation}
+where \(\mathbb{I}[k=j]\) equals one when \(k=j\) and zero otherwise. Substitution into the derivative of cross-entropy gives
+\begin{align*}
+    \frac{\partial\mathcal{L}_{\mathrm{CE}}}{\partial z_j}
+    &=-\sum_{k=1}^{K}
+      \frac{y_k}{p_k}
+      \frac{\partial p_k}{\partial z_j}\\
+    &=-\sum_{k=1}^{K}y_k
+      \bigl(\mathbb{I}[k=j]-p_j\bigr)\\
+    &=p_j\sum_{k=1}^{K}y_k-y_j\\
+    &=p_j-y_j.
+\end{align*}
+Thus,
+\begin{equation}
+    \nabla_{\mathbf{z}}\mathcal{L}_{\mathrm{CE}}
+    =\mathbf{p}-\mathbf{y}.
+    \label{eq:softmax-ce-gradient}
+\end{equation}
+The gradient $\mathbf p-\mathbf y$ results from the composition of softmax and cross-entropy, rather than from softmax alone.
+
+\subsection{Forward and backward computation in a two-layer network}
+
+Consider a \(K\)-class network with one hidden layer of width \(m\):
+\begin{align}
+    \mathbf{z}^{(1)}
+    &=\mathbf{W}^{(1)}\mathbf{x}+\mathbf{b}^{(1)},
+    & \mathbf{W}^{(1)}&\in\mathbb{R}^{m\times d},
+    \label{eq:two-layer-z1}\\
+    \mathbf{h}
+    &=\phi\!\left(\mathbf{z}^{(1)}\right),
+    & \mathbf{h}&\in\mathbb{R}^{m},
+    \label{eq:two-layer-h}\\
+    \mathbf{z}^{(2)}
+    &=\mathbf{W}^{(2)}\mathbf{h}+\mathbf{b}^{(2)},
+    & \mathbf{W}^{(2)}&\in\mathbb{R}^{K\times m},
+    \label{eq:two-layer-z2}\\
+    \mathbf{p}
+    &=\operatorname{softmax}\!\left(\mathbf{z}^{(2)}\right),
+    & \mathcal{L}&=-\sum_{k=1}^{K}y_k\log p_k.
+    \label{eq:two-layer-output}
+\end{align}
+
+\BackpropFigure
+
+Backpropagation applies the chain rule in reverse computational order. The output error signal follows from Equation~\eqref{eq:softmax-ce-gradient}:
+\[
+    \boldsymbol{\delta}^{(2)}
+    :=\frac{\partial\mathcal{L}}{\partial\mathbf{z}^{(2)}}
+    =\mathbf{p}-\mathbf{y}.
+\]
+Since \(\mathbf{z}^{(2)}=\mathbf{W}^{(2)}\mathbf{h}+\mathbf{b}^{(2)}\), the output-layer gradients are
+\begin{align}
+    \frac{\partial\mathcal{L}}{\partial\mathbf{W}^{(2)}}
+    &=\boldsymbol{\delta}^{(2)}\mathbf{h}^{\mathsf T},
+    \label{eq:grad-w2}\\
+    \frac{\partial\mathcal{L}}{\partial\mathbf{b}^{(2)}}
+    &=\boldsymbol{\delta}^{(2)}.
+    \label{eq:grad-b2}
+\end{align}
+The matrix in Equation~\eqref{eq:grad-w2} has shape \(K\times m\), matching \(\mathbf{W}^{(2)}\).
+
+The gradient with respect to the hidden representation is
+\[
+    \frac{\partial\mathcal{L}}{\partial\mathbf{h}}
+    =\left(\mathbf{W}^{(2)}\right)^{\mathsf T}
+      \boldsymbol{\delta}^{(2)}.
+\]
+Passing this gradient through the elementwise activation gives
+\begin{equation}
+    \boldsymbol{\delta}^{(1)}
+    :=\frac{\partial\mathcal{L}}{\partial\mathbf{z}^{(1)}}
+    =\left[
+      \left(\mathbf{W}^{(2)}\right)^{\mathsf T}
+      \boldsymbol{\delta}^{(2)}
+    \right]
+    \odot
+    \phi'\!\left(\mathbf{z}^{(1)}\right),
+    \label{eq:delta-one}
+\end{equation}
+where \(\odot\) denotes elementwise multiplication. The first-layer gradients are
+\begin{align}
+    \frac{\partial\mathcal{L}}{\partial\mathbf{W}^{(1)}}
+    &=\boldsymbol{\delta}^{(1)}\mathbf{x}^{\mathsf T},
+    \label{eq:grad-w1}\\
+    \frac{\partial\mathcal{L}}{\partial\mathbf{b}^{(1)}}
+    &=\boldsymbol{\delta}^{(1)}.
+    \label{eq:grad-b1}
+\end{align}
+For a mini-batch of size \(B\), the usual update averages the sample gradients:
+\[
+    \mathbf{W}^{(l)}
+    \leftarrow
+    \mathbf{W}^{(l)}
+    -\eta\frac{1}{B}
+    \sum_{i=1}^{B}
+    \frac{\partial\mathcal{L}_i}
+         {\partial\mathbf{W}^{(l)}}.
+\]
+
+The same recurrence extends to any number of layers. For
+\(\boldsymbol{\delta}^{(l)}=
+\partial\mathcal{L}/\partial\mathbf{z}^{(l)}\),
+\begin{align}
+    \boldsymbol{\delta}^{(l)}
+    &=\left[
+      \left(\mathbf{W}^{(l+1)}\right)^{\mathsf T}
+      \boldsymbol{\delta}^{(l+1)}
+    \right]
+    \odot
+    \phi^{(l)\prime}\!\left(\mathbf{z}^{(l)}\right),
+    \label{eq:general-backprop-delta}\\
+    \frac{\partial\mathcal{L}}{\partial\mathbf{W}^{(l)}}
+    &=\boldsymbol{\delta}^{(l)}
+      \left(\mathbf{a}^{(l-1)}\right)^{\mathsf T},
+    \qquad
+    \frac{\partial\mathcal{L}}{\partial\mathbf{b}^{(l)}}
+    =\boldsymbol{\delta}^{(l)}.
+    \label{eq:general-backprop-parameter}
+\end{align}
+Backpropagation evaluates the chain rule efficiently by caching forward-pass intermediates and reusing them during the reverse pass.
+
+\subsection{Saturation and vanishing gradients}
+
+Gradients in a deep network contain products of many Jacobians. For a network with \(L\) elementwise activation layers,
+\[
+    \frac{\partial\mathbf{a}^{(L)}}
+         {\partial\mathbf{a}^{(0)}}
+    =\mathbf{D}^{(L)}\mathbf{W}^{(L)}
+     \cdots
+     \mathbf{D}^{(1)}\mathbf{W}^{(1)},
+    \qquad
+    \mathbf{D}^{(l)}
+    =\operatorname{diag}\!\left(
+      \phi^{(l)\prime}(\mathbf{z}^{(l)})
+    \right).
+\]
+If the norms of most factors are below one, the product decays rapidly with depth and gradients near the input approach zero. Repeated factors with norms above one can instead produce exploding gradients.
+
+Sigmoid satisfies
+\[
+    0<\sigma'(z)\leq\frac{1}{4},
+\]
+and its derivative approaches zero as \(|z|\) grows. The derivative of \(\tanh\) also approaches zero in its saturated regions. ReLU reduces this source of decay on its positive half-line, where its derivative is one, but has zero derivative on its negative half-line. A unit that remains negative may therefore stop updating. ReLU neither has derivative one everywhere nor guarantees that gradients cannot vanish.
+
+Initialisation should keep activation and gradient scales from changing too rapidly across layers. Xavier initialisation is commonly paired with approximately symmetric activations such as \(\tanh\), while He initialisation is commonly paired with ReLU. Recurrent networks face the same issue across time steps; gated state updates help control gradient flow over long sequences.
+
+
+\section{Convolutional and Recurrent Networks}
+\label{sec:cnn-rnn}
+
+Fully connected layers do not encode spatial or temporal structure. Nearby pixels in an image are often related, while a position in a sequence may depend on earlier positions. Convolutional networks use local connectivity and spatial parameter sharing. Recurrent networks share parameters across time and propagate a hidden state along the sequence.
+
+\subsection{A convolutional layer computes cross-correlation}
+
+Let the input be
+\[
+    \mathbf{X}\in
+    \mathbb{R}^{H\times W\times C_{\mathrm{in}}}.
+\]
+For a kernel of spatial size \(K_h\times K_w\), with
+\(C_{\mathrm{in}}\) input channels and \(C_{\mathrm{out}}\) output channels, the complete weight tensor has shape
+\[
+    \mathbf{K}\in
+    \mathbb{R}^{K_h\times K_w\times
+    C_{\mathrm{in}}\times C_{\mathrm{out}}}.
+\]
+The pre-activation at spatial location \((i,j)\) and output channel \(o\) is
+\begin{equation}
+    Z_{i,j,o}
+    =b_o+
+    \sum_{u=0}^{K_h-1}
+    \sum_{v=0}^{K_w-1}
+    \sum_{c=1}^{C_{\mathrm{in}}}
+    K_{u,v,c,o}\,
+    \widetilde{X}_{iS_h+u,\,jS_w+v,\,c},
+    \label{eq:cnn-cross-correlation}
+\end{equation}
+where \(S_h,S_w\) are the strides and \(\widetilde{\mathbf{X}}\) is the padded input. Equation~\eqref{eq:cnn-cross-correlation} does not reverse the kernel horizontally and vertically, so the operation is formally cross-correlation. Machine-learning software and texts conventionally call it convolution.
+
+Each output channel has one scalar bias \(b_o\). One output channel corresponds to a three-dimensional filter spanning all input channels, not a filter applied to only one channel. The number of parameters is
+\begin{equation}
+    K_hK_wC_{\mathrm{in}}C_{\mathrm{out}}
+    +C_{\mathrm{out}}.
+    \label{eq:cnn-parameter-count}
+\end{equation}
+This count does not grow with the input height or width because the same kernel parameters are reused at every spatial position.
+
+\subsection{Kernel size, stride, padding, and output size}
+
+With padding \(P_h,P_w\) and strides \(S_h,S_w\), the output dimensions are
+\begin{align}
+    H_{\mathrm{out}}
+    &=\left\lfloor
+      \frac{H+2P_h-K_h}{S_h}
+      \right\rfloor+1,
+    \label{eq:cnn-height}\\
+    W_{\mathrm{out}}
+    &=\left\lfloor
+      \frac{W+2P_w-K_w}{S_w}
+      \right\rfloor+1.
+    \label{eq:cnn-width}
+\end{align}
+These expressions assume dilation one. Kernel size specifies the local receptive field of one operation; stride specifies the displacement between operations; padding adds rows and columns around the boundary. For an odd-sized kernel and unit stride, choosing
+\[
+    P_h=\frac{K_h-1}{2},
+    \qquad
+    P_w=\frac{K_w-1}{2}
+\]
+preserves the spatial dimensions.
+
+For example, a \(32\times32\) input passed through a \(3\times3\) kernel with padding one and stride one remains \(32\times32\). If only the stride changes to two, then
+\[
+    H_{\mathrm{out}}
+    =W_{\mathrm{out}}
+    =\left\lfloor\frac{32+2-3}{2}\right\rfloor+1
+    =16.
+\]
+
+\ConvolutionGeometryFigure
+
+\subsection{Pooling}
+
+Pooling aggregates values within a local window. Max pooling returns the largest value, while average pooling returns the mean. The window size and stride determine the output size through the same calculation as Equations~\eqref{eq:cnn-height}--\eqref{eq:cnn-width}, using the pooling-window parameters.
+
+Standard pooling has no learned parameters. During backpropagation, max pooling routes the gradient only to a location that attained the maximum in the forward pass; average pooling distributes the gradient equally across the window. Pooling reduces spatial resolution and subsequent computation, but discards precise positional information. A strided convolution can instead learn the downsampling operation.
+
+\subsection{Recurrent neural networks}
+
+Given a sequence \(\mathbf{x}_1,\ldots,\mathbf{x}_T\), a basic recurrent neural network (RNN) updates its hidden state sequentially:
+\begin{align}
+    \mathbf{a}_t
+    &=\mathbf{W}_x\mathbf{x}_t
+      +\mathbf{U}\mathbf{h}_{t-1}
+      +\mathbf{b},
+    \label{eq:rnn-preactivation}\\
+    \mathbf{h}_t
+    &=\phi(\mathbf{a}_t),
+    \label{eq:rnn-state}\\
+    \mathbf{q}_t
+    &=\mathbf{W}_y\mathbf{h}_t+\mathbf{b}_y.
+    \label{eq:rnn-output}
+\end{align}
+The vector $\mathbf q_t$ contains the output logits. The matrices \(\mathbf{W}_x,\mathbf{U},\mathbf{W}_y\) are shared across all time steps. An unrolled network appears to contain \(T\) cells, but every cell refers to the same parameters. Its parameter count is therefore independent of sequence length.
+
+The state \(\mathbf{h}_t\) carries information from earlier positions that is relevant to the current computation. A loss may be applied only at the final position or at every position. The latter case can be written as
+\[
+    \mathcal{L}=\sum_{t=1}^{T}\ell_t(\mathbf{q}_t).
+\]
+
+\subsection{Backpropagation through time}
+
+Training an RNN requires backpropagation through time (BPTT). Define
+\[
+    \mathbf e_t
+    :=\frac{\partial\ell_t}{\partial\mathbf q_t},
+    \qquad
+    \boldsymbol{\delta}_t
+    :=\frac{\partial\mathcal{L}}{\partial\mathbf{a}_t},
+    \qquad
+    \boldsymbol{\delta}_{T+1}=\mathbf{0}.
+\]
+Working backwards from \(t=T\),
+\begin{equation}
+    \boldsymbol{\delta}_t
+    =\left(
+      \mathbf W_y^{\mathsf T}\mathbf e_t
+      +\mathbf{U}^{\mathsf T}\boldsymbol{\delta}_{t+1}
+    \right)
+    \odot\phi'(\mathbf{a}_t).
+    \label{eq:bptt-recurrence}
+\end{equation}
+The gradients of shared parameters sum the contributions from all time steps:
+\begin{align}
+    \frac{\partial\mathcal{L}}{\partial\mathbf{W}_x}
+    &=\sum_{t=1}^{T}
+      \boldsymbol{\delta}_t\mathbf{x}_t^{\mathsf T},
+    \label{eq:bptt-wx}\\
+    \frac{\partial\mathcal{L}}{\partial\mathbf{U}}
+    &=\sum_{t=1}^{T}
+      \boldsymbol{\delta}_t\mathbf{h}_{t-1}^{\mathsf T},
+    \label{eq:bptt-u}\\
+    \frac{\partial\mathcal{L}}{\partial\mathbf{b}}
+    &=\sum_{t=1}^{T}\boldsymbol{\delta}_t.
+    \label{eq:bptt-b}
+    \\
+    \frac{\partial\mathcal{L}}{\partial\mathbf{W}_y}
+    &=\sum_{t=1}^{T}\mathbf e_t\mathbf h_t^{\mathsf T},
+    &
+    \frac{\partial\mathcal{L}}{\partial\mathbf b_y}
+    &=\sum_{t=1}^{T}\mathbf e_t.
+    \label{eq:bptt-output}
+\end{align}
+For a loss applied only at the final position, set $\mathbf e_t=\mathbf 0$ for $t<T$.
+
+The influence of an early state on a later state contains a long product of recurrent Jacobians. In schematic form,
+\[
+    \frac{\partial\mathbf{h}_T}{\partial\mathbf{h}_t}
+    =\prod_{s=t+1}^{T}
+      \left[
+      \operatorname{diag}\!\bigl(\phi'(\mathbf{a}_s)\bigr)
+      \mathbf{U}
+      \right],
+\]
+with the factors ordered by time. This product may decay to zero or grow rapidly, producing vanishing or exploding gradients. Gradient clipping limits exploding gradients but cannot restore gradients that have already vanished. Truncated BPTT propagates gradients through a finite time window, reducing computation and memory at the cost of discarding longer dependencies.
+
+\subsection{Information flow in an LSTM}
+
+A long short-term memory network (LSTM) introduces a cell state \(\mathbf{c}_t\) and gates that control retention, writing, and readout. One common parameterisation is
+\begin{align}
+    \mathbf{f}_t
+    &=\sigma\!\left(
+      \mathbf{W}_f\mathbf{x}_t
+      +\mathbf{U}_f\mathbf{h}_{t-1}
+      +\mathbf{b}_f
+    \right),\\
+    \mathbf{i}_t
+    &=\sigma\!\left(
+      \mathbf{W}_i\mathbf{x}_t
+      +\mathbf{U}_i\mathbf{h}_{t-1}
+      +\mathbf{b}_i
+    \right),\\
+    \widetilde{\mathbf{c}}_t
+    &=\tanh\!\left(
+      \mathbf{W}_c\mathbf{x}_t
+      +\mathbf{U}_c\mathbf{h}_{t-1}
+      +\mathbf{b}_c
+    \right),\\
+    \mathbf{c}_t
+    &=\mathbf{f}_t\odot\mathbf{c}_{t-1}
+      +\mathbf{i}_t\odot\widetilde{\mathbf{c}}_t,
+    \label{eq:lstm-cell}\\
+    \mathbf{o}_t
+    &=\sigma\!\left(
+      \mathbf{W}_o\mathbf{x}_t
+      +\mathbf{U}_o\mathbf{h}_{t-1}
+      +\mathbf{b}_o
+    \right),\\
+    \mathbf{h}_t
+    &=\mathbf{o}_t\odot\tanh(\mathbf{c}_t).
+    \label{eq:lstm-hidden}
+\end{align}
+
+\LstmFlowFigure
+
+The forget gate \(\mathbf{f}_t\) controls retention of the previous cell state, the input gate \(\mathbf{i}_t\) controls writing of the candidate state, and the output gate \(\mathbf{o}_t\) controls how much of the cell state enters the hidden representation. Along the direct cell-state path in Equation~\eqref{eq:lstm-cell},
+\[
+    \frac{\partial\mathbf{c}_t}
+         {\partial\mathbf{c}_{t-1}}
+    =\operatorname{diag}(\mathbf{f}_t),
+\]
+when the gate dependence is held fixed. If the forget gate remains close to one, gradients can travel farther through the additive state update. This mechanism mitigates vanishing gradients but does not guarantee preservation of dependencies of arbitrary length.
+
+\subsection{Information flow in a GRU}
+
+A gated recurrent unit (GRU) has no separate cell state. The following convention lets larger \(\mathbf{z}_t\) write more of the candidate state:
+\begin{align}
+    \mathbf{r}_t
+    &=\sigma\!\left(
+      \mathbf{W}_r\mathbf{x}_t
+      +\mathbf{U}_r\mathbf{h}_{t-1}
+      +\mathbf{b}_r
+    \right),\\
+    \mathbf{z}_t
+    &=\sigma\!\left(
+      \mathbf{W}_z\mathbf{x}_t
+      +\mathbf{U}_z\mathbf{h}_{t-1}
+      +\mathbf{b}_z
+    \right),\\
+    \widetilde{\mathbf{h}}_t
+    &=\tanh\!\left(
+      \mathbf{W}_h\mathbf{x}_t
+      +\mathbf{U}_h
+       (\mathbf{r}_t\odot\mathbf{h}_{t-1})
+      +\mathbf{b}_h
+    \right),\\
+    \mathbf{h}_t
+    &=(\mathbf{1}-\mathbf{z}_t)
+      \odot\mathbf{h}_{t-1}
+      +\mathbf{z}_t\odot\widetilde{\mathbf{h}}_t.
+    \label{eq:gru-update}
+\end{align}
+The reset gate \(\mathbf{r}_t\) controls how much of the previous state enters the candidate computation. The update gate \(\mathbf{z}_t\) interpolates between the previous state and the candidate. Some texts use the opposite convention for \(\mathbf{z}_t\); the state-update equation determines its meaning. A GRU has fewer gates and usually fewer parameters than an LSTM with the same hidden width.
+
+
+\section{Unsupervised Learning and Autoencoders}
+\label{sec:unsupervised}
+
+Unsupervised objectives are defined directly on the inputs: $k$-means minimises within-cluster distance, whereas an autoencoder minimises reconstruction error. Neither objective necessarily recovers groups that coincide with downstream class labels.
+
+\ArchitectureFigure
+
+\subsection{The K-means objective}
+
+Given samples \(\mathbf{x}_1,\ldots,\mathbf{x}_n\in\mathbb{R}^{d}\) and a chosen number of clusters \(K\), let \(c_i\in\{1,\ldots,K\}\) be the assignment of sample \(i\), and let \(\boldsymbol{\mu}_k\) be the centre of cluster \(k\). K-means minimises the within-cluster sum of squares
+\begin{equation}
+    J(\mathbf{c},\boldsymbol{\mu})
+    =\sum_{i=1}^{n}
+      \left\lVert
+      \mathbf{x}_i-\boldsymbol{\mu}_{c_i}
+      \right\rVert_2^2.
+    \label{eq:kmeans-objective}
+\end{equation}
+The objective contains both discrete assignments and continuous centroids, so it is normally optimised by alternating between them.
+
+With fixed centroids, each sample is assigned to its nearest centroid:
+\begin{equation}
+    c_i
+    \leftarrow
+    \operatorname*{arg\,min}_{k\in\{1,\ldots,K\}}
+    \left\lVert
+    \mathbf{x}_i-\boldsymbol{\mu}_k
+    \right\rVert_2^2.
+    \label{eq:kmeans-assignment}
+\end{equation}
+With fixed assignments, centroid \(k\) is updated to the mean of its assigned samples:
+\begin{equation}
+    \boldsymbol{\mu}_k
+    \leftarrow
+    \frac{1}{|C_k|}
+    \sum_{i:c_i=k}\mathbf{x}_i,
+    \qquad
+    C_k=\{i:c_i=k\}.
+    \label{eq:kmeans-centroid}
+\end{equation}
+
+\KmeansIterationElbowFigure
+
+The mean minimises squared error within a fixed cluster. Both the assignment
+step and the centroid step leave Equation~\eqref{eq:kmeans-objective} unchanged
+or decrease it. Finite stabilisation follows when every assignment change
+strictly decreases the objective, ties are resolved consistently, and empty
+clusters are not reinitialised in a way that increases it. The endpoint is a
+coordinate-wise fixed point, not necessarily a global optimum.
+
+\subsection{Initialisation and scope}
+
+The initial centroids affect the final solution. Selecting \(K\) data points
+uniformly at random can place several initial centroids close together.
+Multiple runs with different initialisations are therefore compared by their
+final objective values; this reduces sensitivity to one poor initialisation but
+does not guarantee a global optimum.
+
+If a cluster receives no samples, Equation~\eqref{eq:kmeans-centroid} is undefined. An implementation may relocate that centroid to a sample with large current error or reinitialize it. Features should also be scaled before clustering when their numerical ranges differ, because squared Euclidean distance otherwise gives larger-scale features disproportionate influence.
+
+K-means is most suitable for clusters that are approximately spherical, of comparable scale, and separable under Euclidean distance. It is sensitive to outliers and does not directly handle categorical variables or curved, nested clusters. The elbow method examines how \(J\) decreases as \(K\) grows; if the curve has no clear bend, it does not identify a unique number of clusters.
+
+\subsection{The autoencoder objective}
+
+An autoencoder consists of an encoder and a decoder:
+\begin{align}
+    \mathbf{z}
+    &=f_{\boldsymbol{\theta}}(\mathbf{x}),
+    \label{eq:ae-encoder}\\
+    \widehat{\mathbf{x}}
+    &=g_{\boldsymbol{\varphi}}(\mathbf{z}).
+    \label{eq:ae-decoder}
+\end{align}
+The latent vector \(\mathbf{z}\) is an internal representation of the input. The parameters are learned through the reconstruction objective
+\begin{equation}
+    \min_{\boldsymbol{\theta},\boldsymbol{\varphi}}
+    \frac{1}{n}\sum_{i=1}^{n}
+    \ell\!\left(
+      \mathbf{x}_i,
+      g_{\boldsymbol{\varphi}}
+      \bigl(f_{\boldsymbol{\theta}}(\mathbf{x}_i)\bigr)
+    \right)
+    +\Omega(\boldsymbol{\theta},\boldsymbol{\varphi}).
+    \label{eq:ae-objective}
+\end{equation}
+Real-valued inputs are often trained with squared reconstruction error,
+\[
+    \ell(\mathbf{x},\widehat{\mathbf{x}})
+    =\left\lVert
+      \mathbf{x}-\widehat{\mathbf{x}}
+    \right\rVert_2^2.
+\]
+Elementwise binary cross-entropy is appropriate when the input components have a Bernoulli interpretation. A Sigmoid output alone is not sufficient reason to assume this statistical model.
+
+An autoencoder is undercomplete when
+\[
+    \dim(\mathbf{z})<\dim(\mathbf{x}).
+\]
+An undercomplete bottleneck limits representational capacity, but it does not by itself guarantee information loss on the data distribution. Data supported on a sufficiently low-dimensional set may still be reconstructed exactly. Under stronger conditions---for example, continuous encoder and decoder maps with data support containing a full-dimensional open set---an exact lower-dimensional code is impossible. If the latent dimension is at least the input dimension and the network has sufficient capacity, the model may approximate the identity map. In either case, low reconstruction error need not indicate a useful representation. Sparsity penalties, denoising objectives, and related regularisation mechanisms can discourage an identity-like solution, especially in an overcomplete model.
+
+\AutoencoderManifoldFigure
+
+\subsection{Linear autoencoders and PCA}
+
+The relation between a linear autoencoder and principal component analysis holds only under specific conditions. Let \(\mathbf{X}\in\mathbb{R}^{n\times d}\) be a centred data matrix and let the bottleneck dimension be \(q<d\). With a linear encoder, a linear decoder, squared reconstruction error, and no bias, the objective is
+\begin{equation}
+    \min_{\mathbf{W}_e,\mathbf{W}_d}
+    \left\lVert
+      \mathbf{X}
+      -\mathbf{X}\mathbf{W}_e\mathbf{W}_d
+    \right\rVert_F^2,
+    \qquad
+    \mathbf{W}_e\in\mathbb{R}^{d\times q},
+    \quad
+    \mathbf{W}_d\in\mathbb{R}^{q\times d}.
+    \label{eq:linear-ae}
+\end{equation}
+The optimal reconstruction subspace in Equation~\eqref{eq:linear-ae} is the subspace spanned by the first \(q\) principal components. Under the additional constraints
+\[
+    \mathbf{W}_d=\mathbf{W}_e^{\mathsf T},
+    \qquad
+    \mathbf{W}_e^{\mathsf T}\mathbf{W}_e=\mathbf{I},
+\]
+the reconstruction is the orthogonal projection
+\[
+    \widehat{\mathbf{X}}
+    =\mathbf{X}\mathbf{W}_e\mathbf{W}_e^{\mathsf T},
+\]
+and the columns of an optimal \(\mathbf{W}_e\) can be chosen as the leading eigenvectors of the data covariance matrix.
+
+Without the orthogonality constraint, latent coordinates are not unique. An invertible change of basis within the same principal subspace can yield the same reconstruction, so individual hidden units need not equal individual principal-component directions. Nonlinear activations, regularisation, or a different reconstruction loss also remove the equivalence with PCA.
+
+\subsection{Sparse, deep, and convolutional autoencoders}
+
+\paragraph{Sparse autoencoders.}
+A sparse autoencoder may use a wide latent layer while requiring only a small
+number of units to be active for each input. One option adds
+$\lambda\lVert\mathbf z\rVert_1$ to the reconstruction objective, encouraging
+the encoder to represent each input with relatively few active latent units.
+
+\paragraph{Deep autoencoders.}
+Both encoder and decoder may contain several nonlinear layers. Greater depth can represent nonlinear mappings, but the training problem is non-convex. A lower training reconstruction error does not imply better generalisation or a latent representation that is more suitable for a downstream task.
+
+\paragraph{Convolutional autoencoders.}
+For images, a convolutional encoder preserves local spatial structure and shares parameters across positions. The decoder commonly restores resolution through upsampling followed by convolution, or through transposed convolution. In the latter case, incompatible kernel and stride choices can create uneven overlap and grid artefacts.
+
+\subsection{Limits of the compression interpretation}
+
+A latent dimension smaller than the input dimension means only that each sample is represented internally by fewer numerical values. It does not determine the size of a compressed file, which also depends on numerical precision, quantisation, entropy coding, and the storage cost of the decoder.
+
+The reconstruction loss determines which information is retained. Squared error favours directions with large numerical variation, which need not carry the semantics required by a classification task. Reconstruction error measures fidelity under the chosen data distribution and loss; it does not establish semantic class structure or a practical compression ratio.

@@ -1,0 +1,157 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=18mm,top=20mm,bottom=19mm,headheight=22pt]{geometry}
+\usepackage{amsmath,amssymb,mathtools,bm}
+\usepackage{booktabs,tabularx,array,multicol}
+\usepackage{enumitem}
+\usepackage[most]{tcolorbox}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta,calc,positioning,fit,backgrounds,matrix,patterns,decorations.pathreplacing}
+
+\definecolor{Navy}{HTML}{173B57}
+\definecolor{Blue}{HTML}{2D6A9F}
+\definecolor{Teal}{HTML}{177C76}
+\definecolor{Orange}{HTML}{B9652B}
+\definecolor{Red}{HTML}{A43D3D}
+\definecolor{Ink}{HTML}{26343D}
+\definecolor{Muted}{HTML}{66757F}
+\definecolor{PaleBlue}{HTML}{F1F6FA}
+\definecolor{PaleTeal}{HTML}{EFF8F6}
+\definecolor{PaleOrange}{HTML}{FFF7EF}
+\definecolor{PaleRed}{HTML}{FFF2F2}
+\definecolor{Rule}{HTML}{CBD7DF}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=Navy,
+  urlcolor=Blue,
+  citecolor=Teal,
+  pdftitle={CS3244 Machine Learning Notes},
+  pdfauthor={},
+  pdfsubject={CS3244 machine learning study notes}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{Navy}\textbf{CS3244} Machine Learning}
+\fancyhead[R]{\small\color{Muted}Study Notes}
+\fancyfoot[L]{\scriptsize\color{Muted}\texttt{Gao327}}
+\fancyfoot[C]{\scriptsize\color{Muted}Unofficial study material; current course materials remain authoritative}
+\fancyfoot[R]{\small\color{Ink}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{Rule}\leaders\hrule height \headrulewidth\hfill}}
+
+\setlength{\parindent}{2em}
+\setlength{\parskip}{2.2pt}
+\setlist[itemize]{leftmargin=1.55em,itemsep=2pt,topsep=3pt}
+\setlist[enumerate]{leftmargin=1.8em,itemsep=2pt,topsep=3pt}
+\renewcommand{\arraystretch}{1.17}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\allowdisplaybreaks[2]
+
+\titleformat{\section}
+  {\Large\bfseries\color{Navy}}{\thesection}{0.65em}{}
+\titleformat{\subsection}
+  {\large\bfseries\color{Blue}}{\thesubsection}{0.55em}{}
+\titleformat{\subsubsection}
+  {\normalsize\bfseries\color{Teal}}{\thesubsubsection}{0.5em}{}
+
+\newtcolorbox{definition}[1][]{
+  enhanced,breakable,colback=PaleBlue,colframe=Blue,
+  boxrule=0.6pt,arc=1.5mm,left=2.5mm,right=2.5mm,top=1.6mm,bottom=1.6mm,
+  fonttitle=\bfseries,title={#1}
+}
+\newtcolorbox{derivation}[1][]{
+  enhanced,breakable,colback=PaleTeal,colframe=Teal,
+  boxrule=0.6pt,arc=1.5mm,left=2.5mm,right=2.5mm,top=1.6mm,bottom=1.6mm,
+  fonttitle=\bfseries,title={#1}
+}
+\newtcolorbox{condition}[1][]{
+  enhanced,breakable,colback=PaleOrange,colframe=Orange,
+  boxrule=0.6pt,arc=1.5mm,left=2.5mm,right=2.5mm,top=1.6mm,bottom=1.6mm,
+  fonttitle=\bfseries,title={#1}
+}
+\newtcolorbox{correction}[1][]{
+  enhanced,breakable,colback=PaleRed,colframe=Red,
+  boxrule=0.6pt,arc=1.5mm,left=2.5mm,right=2.5mm,top=1.6mm,bottom=1.6mm,
+  fonttitle=\bfseries,title={#1}
+}
+\newtcolorbox{examplebox}[1][]{
+  enhanced,breakable,colback=white,colframe=Rule,
+  boxrule=0.6pt,arc=1.5mm,left=2.5mm,right=2.5mm,top=1.6mm,bottom=1.6mm,
+  fonttitle=\bfseries,title={#1}
+}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\argmin}{\operatorname*{arg\,min}}
+\newcommand{\argmax}{\operatorname*{arg\,max}}
+\newcommand{\sign}{\operatorname{sign}}
+\newcommand{\softmax}{\operatorname{softmax}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\abs}[1]{\left\lvert #1\right\rvert}
+\newcommand{\inner}[2]{\left\langle #1,#2\right\rangle}
+\newcommand{\vect}[1]{\bm{#1}}
+\newcommand{\ind}{\mathbb{I}}
+\newcommand{\dd}{\,\mathrm{d}}
+
+\input{figures}
+
+\begin{document}
+
+\begin{tcolorbox}[
+  enhanced,colback=Navy,colframe=Navy,arc=2.5mm,boxrule=0pt,
+  left=7mm,right=7mm,top=8mm,bottom=7mm
+]
+{\color{white}\fontsize{25}{29}\selectfont\bfseries CS3244 Machine Learning\par}
+\vspace{2mm}
+\end{tcolorbox}
+
+\section*{Scope and notation}
+\addcontentsline{toc}{section}{Scope and notation}
+
+These notes develop the main ideas of machine learning from foundational statistical learning and classical models through neural networks and unsupervised learning. Topics are ordered by conceptual dependency, with mathematical definitions, derivations, and model assumptions introduced before applications. This is an unofficial study guide; current course materials determine the assessed scope and notation.
+
+Let the training data be
+\[
+  \mathcal D=\{(\vect x_i,y_i)\}_{i=1}^{n},
+  \qquad \vect x_i\in\R^d.
+\]
+Write the model as $f_{\vect\theta}$, the prediction as $\hat y_i=f_{\vect\theta}(\vect x_i)$, and the per-example loss as $\ell(y_i,\hat y_i)$. Vectors are columns unless stated otherwise. The intercept is written separately unless an augmented design matrix is introduced explicitly.
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash\bfseries\color{Navy}}p{31mm} Y Y}
+\toprule
+Task & Output & Typical training objective \\
+\midrule
+Regression & A continuous value or vector & Squared or absolute error \\
+Classification & A class or class probability & Logistic, cross-entropy, or hinge loss \\
+Clustering & A cluster assignment without labels & Within-cluster squared distance \\
+Representation learning & A lower-dimensional or structured representation & Reconstruction loss with structural constraints \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\tableofcontents
+\newpage
+
+\input{sections/part1_classical}
+\input{sections/part2_learning}
+\input{sections/part3_neural}
+
+\end{document}
