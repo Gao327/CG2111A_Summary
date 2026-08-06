@@ -1,0 +1,652 @@
+\input{figures_classical_extra}
+
+\section{Learning Problems and a Leakage-Free Workflow}
+\label{sec:risk-workflow}
+
+Supervised learning begins with labelled observations
+\[
+\mathcal D=\{(x_i,y_i)\}_{i=1}^{n},
+\qquad x_i\in\mathbb R^d.
+\]
+The vector $x_i$ records the $d$ features of example $i$. In regression,
+$y_i$ is usually real-valued. In classification, $y_i$ belongs to a finite set;
+binary labels are commonly encoded as either $\{0,1\}$ or $\{-1,+1\}$.
+Each encoding will be stated when it is used.
+
+A model $f_\theta$ is determined by parameters $\theta$ and produces the
+prediction $\hat y=f_\theta(x)$. A loss $\ell(y,\hat y)$ measures the error on
+one example. Training usually minimises the empirical risk
+\[
+\widehat R(\theta)
+=\frac{1}{n}\sum_{i=1}^{n}\ell\bigl(y_i,f_\theta(x_i)\bigr).
+\]
+The actual objective is low error on new examples from the same data-generating
+distribution. If $(X,Y)$ denotes such an example, the relevant quantity is the
+population risk
+\[
+R(\theta)=\mathbb E_{(X,Y)}
+\left[\ell\bigl(Y,f_\theta(X)\bigr)\right].
+\]
+The population distribution is unknown, so $R(\theta)$ must be estimated using
+data that did not determine the fitted model.
+
+\subsection{Training, validation, and test sets}
+
+A sound experiment splits the data before performing any operation that learns
+from the data. The three subsets serve different purposes.
+\begin{enumerate}
+    \item The training set estimates model parameters, such as linear weights,
+    tree split points, or neural-network weights.
+    \item The validation set selects model classes and hyperparameters, such as
+    the number of neighbours, tree depth, or the SVM penalty $C$.
+    \item The test set is used once, after all choices have been fixed, to
+    estimate the generalisation error of the final procedure.
+\end{enumerate}
+
+The word \emph{model} includes the complete preprocessing pipeline. Imputation,
+standardisation, feature selection, dimensionality reduction, and resampling
+may all learn properties of a dataset. They must therefore be fitted using only
+the training data. For example, standardisation uses
+\[
+z_{ij}=\frac{x_{ij}-\mu_j}{s_j},
+\]
+where $\mu_j$ and $s_j$ are estimated from the training set. The same values
+are then applied to validation and test examples. Estimating them from the full
+dataset allows information from the test set to enter training and produces an
+optimistic test error.
+
+After hyperparameters have been selected, the final model may be refitted on
+the union of the training and validation sets. Every preprocessing parameter
+must then be re-estimated on that union, while the test set remains untouched.
+Using test results to revise the model turns the test set into another
+validation set and invalidates its role as an independent evaluation.
+
+\subsection{The experimental data flow}
+
+For a fixed family of candidate procedures, the data flow is
+\[
+\mathcal D_{\mathrm{train}}
+\xrightarrow{\text{fit preprocessing and model}}
+f_{\theta}
+\xrightarrow{\mathcal D_{\mathrm{val}}}
+\text{select hyperparameters}
+\xrightarrow{\text{refit}}
+f_{\mathrm{final}}
+\xrightarrow{\mathcal D_{\mathrm{test}}}
+\text{report error}.
+\]
+When the dataset is small, cross-validation within the training data can
+replace a single validation split. Preprocessing must be refitted inside every
+fold using only that fold's training portion.
+
+\TrainingPipelineFigure
+
+
+\section{Distance, Scaling, and Nearest Neighbours}
+
+K-nearest neighbours (KNN) assumes that nearby observations tend to have
+similar labels. Whether this assumption is useful depends first on the feature
+representation and distance function. Different distances encode different
+notions of similarity and are not interchangeable.
+
+\subsection{Distances and similarities}
+
+For $x,z\in\mathbb R^d$, the Euclidean and Manhattan distances are
+\[
+d_2(x,z)=\left(\sum_{j=1}^{d}(x_j-z_j)^2\right)^{1/2},
+\qquad
+d_1(x,z)=\sum_{j=1}^{d}|x_j-z_j|.
+\]
+Euclidean distance is the straight-line distance and gives relatively large
+weight to a large discrepancy in one coordinate. Manhattan distance adds
+absolute coordinate-wise discrepancies and is less dominated by such a
+discrepancy.
+
+When direction matters more than magnitude, cosine similarity is often more
+appropriate for non-zero vectors $x$ and $z$:
+\[
+\operatorname{cos}(x,z)=\frac{x^\top z}
+{\lVert x\rVert_2\lVert z\rVert_2}.
+\]
+The associated cosine distance is
+$d_{\cos}(x,z)=1-\operatorname{cos}(x,z)$. Cosine similarity is not Euclidean
+distance. After both vectors have been normalised to unit length, however,
+\[
+\left\lVert\frac{x}{\lVert x\rVert_2}-
+\frac{z}{\lVert z\rVert_2}\right\rVert_2^2
+=2\bigl(1-\operatorname{cos}(x,z)\bigr).
+\]
+
+For sets or binary features, Jaccard similarity ignores features that are absent
+from both observations. If $A$ and $B$ are the sets of non-zero features, then
+\[
+J(A,B)=\frac{|A\cap B|}{|A\cup B|},
+\qquad
+d_J(A,B)=1-J(A,B).
+\]
+This definition is well suited to sparse presence--absence data because a
+shared zero does not increase similarity. If $A=B=\varnothing$, the displayed
+ratio is undefined; applications that permit empty sets must state a convention,
+commonly $J(\varnothing,\varnothing)=1$.
+
+\subsection{Feature scaling}
+
+Distances are sensitive to units. If one feature is measured in thousands and
+another lies between $0$ and $1$, the first feature can dominate every
+Euclidean distance. Two common transformations are standardisation
+\[
+z_{ij}=\frac{x_{ij}-\mu_j}{s_j}
+\]
+and min--max scaling
+\[
+z_{ij}=\frac{x_{ij}-a_j}{b_j-a_j},
+\]
+where $a_j$ and $b_j$ are the minimum and maximum of feature $j$ in the
+training set. Standardisation does not confine values to a fixed interval, but
+it is usually less dependent on two observed endpoints. In either case, all
+statistics are estimated from the training data alone. A constant feature has
+$s_j=0$ and $b_j-a_j=0$; remove it or map it to a fixed value rather than divide
+by zero.
+
+Scaling is not an automatic requirement. Binary indicators, variables with a
+meaningful physical scale, and inputs to decision trees need not receive the
+same treatment. The choice follows from how the model uses each feature.
+
+\subsection{The curse of dimensionality}
+\label{sec:knn-dimensionality}
+
+With a fixed number of observations, the sample becomes sparse as the dimension
+increases. In a unit hypercube, a smaller hypercube of side length $r$ occupies
+the fraction $r^d$ of the total volume. To enclose a fixed fraction $q$ of the
+volume, its side length must be
+\[
+r=q^{1/d}.
+\]
+As $d$ increases, $r$ approaches $1$. A neighbourhood must therefore extend
+through much of every coordinate range before it contains a fixed fraction of
+the observations; it is no longer genuinely local.
+
+Many high-dimensional distributions also exhibit distance concentration: the
+relative difference between the nearest and farthest distances shrinks. The
+distances remain computable, but their ranking carries less information. For
+KNN, high dimensionality primarily causes sparse neighbourhoods and distance
+concentration, which can in turn increase variance. More observations, feature
+selection, dimensionality reduction, or a structured similarity measure may be
+needed.
+
+\subsection{K-nearest neighbours}
+
+For a query $x$, KNN finds the $k$ training observations with the smallest
+distance and denotes their index set by $N_k(x)$. A classifier uses a majority
+vote,
+\[
+\hat y
+=\operatorname*{arg\,max}_{c}
+\sum_{i\in N_k(x)}\mathbf 1(y_i=c),
+\]
+whereas a regressor commonly uses the mean
+\[
+\hat y=\frac{1}{k}\sum_{i\in N_k(x)}y_i.
+\]
+Closer observations can be given more weight. One possible choice is
+\[
+w_i(x)=\frac{1}{d(x,x_i)+\varepsilon},
+\qquad
+\hat y
+=\frac{\sum_{i\in N_k(x)}w_i(x)y_i}
+{\sum_{i\in N_k(x)}w_i(x)}.
+\]
+where $\varepsilon>0$. The same weights can be used for a weighted class vote.
+
+\KnnGeometryFigure
+
+The value of $k$ controls smoothness. A small $k$ preserves local structure but
+is sensitive to noise and individual outliers. A large $k$ is more stable but
+may erase a genuine boundary. The rule $k=\sqrt n$ is at most an initial
+heuristic; validation or cross-validation must determine the final value. An
+odd $k$ reduces ties in binary classification, although ties can still occur
+with several classes or repeated distances and therefore require an explicit
+tie-breaking rule.
+
+KNN has little explicit training cost but stores the training set. A brute-force
+implementation computes $n$ distances in $d$ dimensions for each query, giving
+time $O(nd)$ and storage $O(nd)$. Tree-based indices can accelerate low-dimensional
+queries, but their benefit often declines in high dimensions.
+
+
+\section{Decision Trees and Ensembles}
+
+A decision tree partitions the input space recursively. Each internal node asks
+a question about a feature, and each leaf stores a prediction. For a continuous
+feature, a common split is
+\[
+x_j\le t,
+\]
+where $j$ selects a feature and $t$ is a threshold. For the observations $S$ at
+the current node, the split produces
+\[
+S_L=\{(x_i,y_i)\in S:x_{ij}\le t\},
+\qquad
+S_R=S\setminus S_L.
+\]
+The two subsets need not have equal size. Training selects the split that most
+reduces label impurity or numerical dispersion and repeats the process at the
+child nodes.
+
+\subsection{Impurity in classification trees}
+
+Let $p_c$ be the proportion of class $c$ at node $S$. Entropy and Gini
+impurity are
+\[
+H(S)=-\sum_{c=1}^{C}p_c\log_2 p_c,
+\qquad
+G(S)=1-\sum_{c=1}^{C}p_c^2,
+\]
+with the convention $0\log 0=0$. Both are zero at a pure node and increase as
+the class distribution becomes more mixed.
+
+Suppose a split produces child nodes of sizes $n_L$ and $n_R$, where
+$n_S=n_L+n_R$. For an impurity measure $I$, the reduction is
+\[
+\Delta I
+=I(S)-\frac{n_L}{n_S}I(S_L)
+-\frac{n_R}{n_S}I(S_R).
+\]
+When $I=H$, this reduction is the information gain. A greedy tree normally
+chooses the feature and threshold with the largest $\Delta I$.
+
+For example, a node containing six positive and four negative examples has
+entropy
+\[
+H(S)=-0.6\log_2 0.6-0.4\log_2 0.4\approx0.971.
+\]
+Suppose a split sends four positive examples to the left and the remaining two
+positive and four negative examples to the right. The weighted child entropy is
+\[
+\frac{4}{10}\cdot0+
+\frac{6}{10}\left(-\frac13\log_2\frac13-
+\frac23\log_2\frac23\right)
+\approx0.551,
+\]
+so the information gain is approximately $0.420$. The weighting accounts for
+both child purity and child size; inspecting only one child is insufficient.
+
+A classification leaf can output its majority class or estimated class
+proportions,
+\[
+\widehat P(Y=c\mid x)=\frac{n_c}{n_{\mathrm{leaf}}}.
+\]
+The latter permits threshold adjustment, although probabilities estimated from
+small leaves are unstable.
+
+\subsection{Regression trees}
+
+A regression tree uses the same partitioning mechanism. A leaf predicts its
+mean response
+\[
+\bar y_S=\frac{1}{|S|}\sum_{i\in S}y_i.
+\]
+A common node impurity is the within-node sum of squared errors
+\[
+I_{\mathrm{reg}}(S)=
+\sum_{i\in S}(y_i-\bar y_S)^2.
+\]
+Training selects the split that maximises
+\[
+I_{\mathrm{reg}}(S)
+-I_{\mathrm{reg}}(S_L)
+-I_{\mathrm{reg}}(S_R).
+\]
+The fitted function is constant within each leaf region, so a single regression
+tree produces a piecewise-constant predictor.
+
+\subsection{Stopping and pruning}
+
+If a tree is allowed to keep splitting, a leaf may contain only one observation.
+The resulting tree has low training error and high variance. Pre-pruning limits
+growth directly through a maximum depth, a minimum leaf size, or a minimum
+impurity reduction. Post-pruning first grows a larger tree and then removes
+branches whose improvement is not supported by validation data.
+
+\DecisionTreeLifecycleFigure
+
+Cost-complexity pruning penalises the number of leaves:
+\[
+R_\alpha(T)=R(T)+\alpha |\mathcal L(T)|,
+\]
+where $R(T)$ is the training loss of tree $T$, $\mathcal L(T)$ is its set of
+leaves, and $\alpha\ge0$. Larger values of $\alpha$ favour smaller trees. The
+penalty is selected using validation data.
+
+A prediction visits only the path from the root to a leaf, so its cost is
+$O(h)$ for tree depth $h$. A balanced tree can have logarithmic depth, whereas
+a degenerate tree can have depth linear in its number of leaves. Training cost
+depends on how candidate thresholds are generated and sorted; it cannot be
+described by a universal $O(dn^2\log n)$ expression.
+
+\subsection{Bagging and random forests}
+
+A deep tree can fit a complicated boundary, but small changes in the training
+sample may alter its upper splits. Bagging constructs $M$ bootstrap samples.
+Each contains $n$ observations drawn with replacement from the original sample.
+The base learners are fitted separately, then averaged in regression or combined
+by majority vote or mean class probability in classification:
+\[
+\bar f(x)=\frac1M\sum_{m=1}^{M}f_m(x).
+\]
+
+Suppose the prediction of each base learner at a fixed $x$ has variance
+$\sigma^2$, and any pair has approximately the same correlation $\rho$. Then
+\begin{equation}
+\operatorname{Var}[\bar f(x)]
+=\sigma^2\left(\rho+\frac{1-\rho}{M}\right).
+\label{eq:correlated-ensemble-variance}
+\end{equation}
+The variance becomes $\sigma^2/M$ only when the predictors are independent
+($\rho=0$). Trees trained on related bootstrap samples remain correlated, so
+the reduction is smaller and depends on how effectively the procedure
+decorrelates them.
+
+A random forest adds feature randomisation. At each node, the tree searches for
+a split among only $m_{\mathrm{try}}$ randomly selected features. This prevents
+every tree from repeatedly relying on the same strong feature. The setting
+$m_{\mathrm{try}}\approx\sqrt d$ is a common classification default, not a
+theoretical optimum; regression implementations often use a different default.
+The feature count, tree depth, and leaf size remain hyperparameters.
+
+\EnsembleWorkflowFigure
+
+\subsection{Boosting and gradient boosting}
+
+Bagged learners can be trained in parallel. Boosting adds learners sequentially,
+so that each new learner addresses errors of the current ensemble. An additive
+model has the form
+\[
+F_M(x)=F_0(x)+\sum_{m=1}^{M}\eta\,\gamma_m h_m(x),
+\]
+where $h_m$ is often a shallow tree and $\eta\in(0,1]$ is the learning rate.
+
+Gradient boosting applies this construction to a differentiable loss
+$\ell(y,F(x))$. At iteration $m$, it computes the negative gradient at each
+training observation,
+\[
+r_i^{(m)}=-\left.
+\frac{\partial\ell(y_i,F(x_i))}{\partial F(x_i)}
+\right|_{F=F_{m-1}},
+\]
+and fits $h_m$ to $\{(x_i,r_i^{(m)})\}$. A line search may choose
+\[
+\gamma_m=
+\operatorname*{arg\,min}_{\gamma}
+\sum_{i=1}^{n}
+\ell\bigl(y_i,F_{m-1}(x_i)+\gamma h_m(x_i)\bigr),
+\]
+followed by
+\[
+F_m(x)=F_{m-1}(x)+\eta\gamma_mh_m(x).
+\]
+For squared loss $\ell(y,F)=\tfrac12(y-F)^2$, the negative gradient is the
+residual $y_i-F_{m-1}(x_i)$. Fitting residuals is therefore the squared-loss
+instance of gradient boosting, not its definition for every loss.
+
+Boosting typically reduces bias, while tree depth, learning rate, and the number
+of rounds determine capacity and variance. Select the number of rounds by
+validation or early stopping.
+
+
+\section{Regression and Classification from a Linear Score}
+
+Several linear models share the score
+\[
+s(x)=w^\top x+b.
+\]
+They differ in how they interpret the score, which loss they minimise, and
+whether they impose a margin. Linear regression uses $s(x)$ as a numerical
+prediction. Logistic regression maps it to a probability. The Perceptron and
+SVM classify according to its sign.
+
+\subsection{Linear regression and the normal equations}
+\label{sec:linear-score-regression}
+
+Linear regression takes the score itself as the prediction,
+$\hat y_i=s(x_i)$. With the intercept absorbed into an augmented design matrix
+$X$ and parameter vector $\theta$, its squared-error objective is
+\[
+L(\theta)=\frac{1}{2n}\lVert X\theta-y\rVert_2^2.
+\]
+The derivation of the normal equations, the rank condition for the inverse
+formula, and the regularised solution are given in
+Section~\ref{sec:least-squares}. Linear regression uses the score directly;
+unlike the classifiers below, it neither thresholds the score nor maps it to a
+probability.
+
+\subsection{Logistic regression}
+
+Let $y_i\in\{0,1\}$. Logistic regression maps the linear score to a probability:
+\[
+p_i=P(Y=1\mid x_i)=\sigma(s_i),
+\qquad
+s_i=w^\top x_i+b,
+\qquad
+\sigma(z)=\frac{1}{1+e^{-z}}.
+\]
+Consequently,
+\[
+P(Y=y_i\mid x_i)=p_i^{y_i}(1-p_i)^{1-y_i}.
+\]
+Under conditional independence of the observations, maximum conditional
+likelihood is equivalent to minimising the mean negative log-likelihood
+\begin{align*}
+L(w,b)
+&=-\frac1n\sum_{i=1}^{n}
+\left[y_i\log p_i+(1-y_i)\log(1-p_i)\right]\\
+&=\frac1n\sum_{i=1}^{n}
+\left[\log(1+e^{s_i})-y_is_i\right].
+\end{align*}
+This is binary cross-entropy. With the augmented design matrix $X$ and
+$p=(p_1,\ldots,p_n)^\top$, its gradient is
+\[
+\nabla_\theta L=\frac1nX^\top(p-y).
+\]
+The optimisation procedure is developed in Section~\ref{sec:least-squares} and
+the gradient-descent section that follows it.
+
+The threshold $p_i\ge0.5$ is equivalent to $s_i\ge0$, so the decision boundary
+is $w^\top x+b=0$. Changing the probability threshold changes the classifier
+without refitting the probability model. With labels $y_i\in\{-1,+1\}$, the
+same loss is
+\[
+\ell_{\mathrm{log}}(y_i,s_i)
+=\log\bigl(1+e^{-y_is_i}\bigr).
+\]
+
+\subsection{The Perceptron}
+\label{sec:perceptron}
+
+The Perceptron uses labels $y_i\in\{-1,+1\}$ and predicts
+\[
+\widehat y_i=\operatorname{sign}(w^\top x_i+b).
+\]
+An observation is correctly classified when $y_is_i>0$. On a misclassified
+observation, the update is
+\[
+w\leftarrow w+\eta y_ix_i,
+\qquad
+b\leftarrow b+\eta y_i.
+\]
+This update is a subgradient step on the Perceptron loss
+\[
+\ell_{\mathrm{perc}}(y_i,s_i)=\max(0,-y_is_i).
+\]
+The loss becomes zero as soon as the sign is correct and does not reward a wider
+margin. For linearly separable training data, the Perceptron reaches a separating
+hyperplane after finitely many updates. It need not find the maximum-margin
+hyperplane and does not directly produce class probabilities. On non-separable
+data, the original algorithm may continue updating without convergence.
+
+\subsection{Maximum margin and hard-margin SVM}
+
+Many separating hyperplanes may exist for linearly separable data. SVM fixes a
+functional-margin scale and selects the hyperplane with the largest geometric
+margin. The hard-margin primal problem is
+\begin{align*}
+\min_{w,b}\quad &\frac12\lVert w\rVert_2^2\\
+\text{s.t.}\quad &y_i(w^\top x_i+b)\ge1,
+\qquad i=1,\ldots,n.
+\end{align*}
+The signed distance from $x_i$ to $w^\top x+b=0$ is
+$(w^\top x_i+b)/\lVert w\rVert_2$. Under the constraints, the closest training
+points lie on $w^\top x+b=\pm1$, and the distance between these support
+hyperplanes is
+\[
+\frac{2}{\lVert w\rVert_2}.
+\]
+Minimising $\tfrac12\lVert w\rVert_2^2$ therefore maximises the margin. The
+hard-margin problem is feasible only when the training data are linearly
+separable.
+
+\LinearMarginFigure
+
+\subsection{Soft-margin SVM and hinge loss}
+
+Slack variables $\xi_i\ge0$ allow margin violations, with $C>0$ controlling
+their penalty:
+\begin{align*}
+\min_{w,b,\xi}\quad
+&\frac12\lVert w\rVert_2^2+C\sum_{i=1}^{n}\xi_i\\
+\text{s.t.}\quad
+&y_i(w^\top x_i+b)\ge1-\xi_i,
+\qquad \xi_i\ge0.
+\end{align*}
+For fixed $w,b$, the optimal slack is
+\[
+\xi_i=\max\bigl(0,1-y_i(w^\top x_i+b)\bigr).
+\]
+The primal problem is therefore equivalent to
+\[
+\min_{w,b}\quad
+\frac12\lVert w\rVert_2^2
++C\sum_{i=1}^{n}
+\underbrace{\max(0,1-y_is_i)}_{\text{hinge loss}}.
+\]
+A large $C$ penalises violations heavily and favours fitting more training
+observations. A small $C$ permits more violations in exchange for a wider
+margin. Another common convention writes the objective as
+$\lambda\lVert w\rVert_2^2/2+(1/n)\sum_i\ell_i$. The two conventions correspond
+under a change of scale; values of $C$ and $\lambda$ cannot be compared without
+specifying the objective.
+
+Logistic regression, the Perceptron, and SVM all depend on the signed margin
+$ys$, but use different losses:
+\[
+\begin{aligned}
+\ell_{\mathrm{log}}(y,s)&=\log(1+e^{-ys}),\\
+\ell_{\mathrm{perc}}(y,s)&=\max(0,-ys),\\
+\ell_{\mathrm{hinge}}(y,s)&=\max(0,1-ys).
+\end{aligned}
+\]
+Logistic loss is smooth and admits a probability interpretation. Perceptron
+loss vanishes once the sign is correct. Hinge loss requires a functional margin
+of at least $1$.
+
+\subsection{The SVM dual}
+
+The dual form of soft-margin SVM depends on the inputs only through inner
+products. Introduce multipliers $\alpha_i\ge0$ for the margin constraints and
+$\mu_i\ge0$ for $\xi_i\ge0$. The Lagrangian is
+\begin{align*}
+\mathcal L(w,b,\xi,\alpha,\mu)
+=&\ \frac12\lVert w\rVert_2^2+C\sum_i\xi_i\\
+&-\sum_i\alpha_i
+\left[y_i(w^\top x_i+b)-1+\xi_i\right]
+-\sum_i\mu_i\xi_i.
+\end{align*}
+Stationarity with respect to the primal variables gives
+\[
+\frac{\partial\mathcal L}{\partial w}=0
+\ \Longrightarrow
+w=\sum_i\alpha_i y_ix_i,
+\]
+\[
+\frac{\partial\mathcal L}{\partial b}=0
+\ \Longrightarrow
+\sum_i\alpha_i y_i=0,
+\qquad
+\frac{\partial\mathcal L}{\partial\xi_i}=0
+\ \Longrightarrow
+C-\alpha_i-\mu_i=0.
+\]
+Since $\mu_i\ge0$, the last relation yields $0\le\alpha_i\le C$. Substitution
+into the Lagrangian gives the dual problem
+\begin{align*}
+\max_{\alpha}\quad
+&\sum_{i=1}^{n}\alpha_i
+-\frac12\sum_{i=1}^{n}\sum_{j=1}^{n}
+\alpha_i\alpha_jy_iy_jx_i^\top x_j\\
+\text{s.t.}\quad
+&0\le\alpha_i\le C,
+\qquad
+\sum_{i=1}^{n}\alpha_i y_i=0.
+\end{align*}
+The hard-margin dual has the same objective and equality constraint, but only
+$\alpha_i\ge0$ and no upper bound $C$.
+
+Observations with $\alpha_i>0$ appear in
+$w=\sum_i\alpha_i y_ix_i$ and are the support vectors. If
+$0<\alpha_i<C$, complementary slackness gives
+\[
+y_i(w^\top x_i+b)=1.
+\]
+Hence any such support vector gives
+\[
+b=y_i-\sum_j\alpha_jy_jx_j^\top x_i.
+\]
+Numerical implementations commonly average this value over several support
+vectors satisfying $0<\alpha_i<C$.
+
+\subsection{Kernel SVM}
+
+Both the dual objective and the prediction function require only inner
+products. If a feature map $\phi$ exists, a kernel
+\[
+K(x,z)=\phi(x)^\top\phi(z)
+\]
+can replace the original inner product without explicitly constructing the
+possibly high-dimensional vector $\phi(x)$. The dual becomes
+\begin{align*}
+\max_{\alpha}\quad
+&\sum_i\alpha_i
+-\frac12\sum_i\sum_j
+\alpha_i\alpha_jy_iy_jK(x_i,x_j)\\
+\text{s.t.}\quad
+&0\le\alpha_i\le C,
+\qquad \sum_i\alpha_i y_i=0,
+\end{align*}
+and the prediction is
+\[
+\widehat y(x)=\operatorname{sign}
+\left(\sum_{i=1}^{n}\alpha_i y_iK(x_i,x)+b\right).
+\]
+Only support vectors with $\alpha_i>0$ contribute to this sum.
+
+Common kernels include the linear kernel
+\[
+K_{\mathrm{linear}}(x,z)=x^\top z,
+\]
+the polynomial kernel
+\[
+K_{\mathrm{poly}}(x,z)=(\gamma x^\top z+r)^q,
+\qquad \gamma>0,\quad r\ge0,\quad q\in\{1,2,\ldots\},
+\]
+and the radial basis function kernel
+\[
+K_{\mathrm{RBF}}(x,z)=
+\exp\bigl(-\gamma\lVert x-z\rVert_2^2\bigr),
+\qquad \gamma>0.
+\]
+For a valid kernel, the Gram matrix $K_{ij}=K(x_i,x_j)$ must be positive
+semidefinite for every finite set of inputs. In the RBF kernel, a larger $\gamma$ gives each observation a
+narrower region of influence and usually permits a more intricate boundary; a
+smaller $\gamma$ gives a smoother boundary. The values of $C$ and $\gamma$
+jointly control model capacity and should be selected by the leakage-free
+validation procedure described earlier.

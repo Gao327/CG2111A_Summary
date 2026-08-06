@@ -1,0 +1,299 @@
+% Additional editable vector figures for neural and unsupervised learning.
+
+\newcommand{\ConvolutionGeometryFigure}{%
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\scriptsize]
+% Padding, kernel, and stride.
+\begin{scope}[x=0.56cm,y=0.56cm]
+  \fill[PaleOrange] (0,0) rectangle (7,7);
+  \fill[PaleBlue] (1,1) rectangle (6,6);
+  \fill[Blue!22] (0,4) rectangle (3,7);
+  \foreach \x in {0,...,7} {\draw[Rule] (\x,0)--(\x,7);}
+  \foreach \y in {0,...,7} {\draw[Rule] (0,\y)--(7,\y);}
+  \draw[Blue,very thick] (0,4) rectangle (3,7);
+  \draw[Teal,very thick,dashed] (2,4) rectangle (5,7);
+  \draw[-{Latex[length=1.8mm]},Orange,thick]
+    (1.5,7.55)--node[above] {$S=2$}(3.5,7.55);
+  \node[Blue,align=center] at (1.5,3.45) {$3\times3$\ first window};
+  \draw[-{Latex[length=1.6mm]},Orange]
+    (-0.9,0.55)--(-0.08,0.55);
+  \node[Orange,anchor=e,align=right] at (-0.95,0.55) {padding\\$P=1$};
+  \node[font=\bfseries\small] at (3.5,8.45)
+    {Kernel position and stride};
+  \node[align=center] at (3.5,-0.65)
+    {$H=W=5$, $K=3$, $P=1$, $S=2$\\
+     $\Rightarrow H_{\mathrm{out}}=W_{\mathrm{out}}=3$};
+\end{scope}
+
+\draw[Rule,thick] (6.25,-0.4)--(6.25,5.15);
+
+% Receptive-field growth through two stacked convolutions.
+\begin{scope}[shift={(7.15,0.75)}]
+  \node[font=\bfseries\small] at (4.0,4.05)
+    {Receptive-field growth};
+
+  \fill[PaleBlue] (0,0) rectangle (2.5,2.5);
+  \foreach \x in {0,0.5,...,2.5} {\draw[Rule] (\x,0)--(\x,2.5);}
+  \foreach \y in {0,0.5,...,2.5} {\draw[Rule] (0,\y)--(2.5,\y);}
+  \draw[Blue,very thick] (0,0) rectangle (2.5,2.5);
+  \node[align=center] at (1.25,-0.55) {input\\$5\times5$ region};
+
+  \fill[PaleTeal] (3.8,0.5) rectangle (5.3,2.0);
+  \foreach \x in {3.8,4.3,4.8,5.3} {\draw[Rule] (\x,0.5)--(\x,2.0);}
+  \foreach \y in {0.5,1.0,1.5,2.0} {\draw[Rule] (3.8,\y)--(5.3,\y);}
+  \draw[Teal,very thick] (3.8,0.5) rectangle (5.3,2.0);
+  \node[align=center] at (4.55,-0.55) {layer 1\\$3\times3$ units};
+
+  \fill[PaleOrange] (6.6,1.0) rectangle (7.1,1.5);
+  \draw[Orange,very thick] (6.6,1.0) rectangle (7.1,1.5);
+  \node[align=center] at (6.85,-0.55) {one layer-2\\unit};
+
+  \draw[-{Latex[length=1.8mm]},Ink!70,thick] (2.7,1.25)--(3.55,1.25);
+  \draw[-{Latex[length=1.8mm]},Ink!70,thick] (5.5,1.25)--(6.35,1.25);
+  \node[align=center,Teal] at (4.0,3.05)
+    {two $3\times3$, stride-one layers\\give a $5\times5$ receptive field};
+\end{scope}
+\end{tikzpicture}
+\caption{Convolution geometry. On the left, padding enlarges the effective input and stride moves the kernel between sampled positions; the stated values produce a $3\times3$ output. On the right, one unit after two $3\times3$, stride-one convolutions depends on a $5\times5$ input region, even though each individual operation is local.}
+\label{fig:convolution-geometry}
+\end{figure}}
+
+\newcommand{\LstmFlowFigure}{%
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  state/.style={draw=Blue,rounded corners,fill=PaleBlue,minimum height=8mm,inner xsep=2.5mm},
+  gate/.style={draw=Teal,rounded corners,fill=PaleTeal,minimum height=8mm,inner xsep=2.2mm},
+  candidate/.style={draw=Blue,rounded corners,fill=PaleBlue,minimum height=8mm,inner xsep=2.2mm},
+  op/.style={circle,draw=Orange,fill=PaleOrange,minimum size=7mm,inner sep=0pt,font=\small},
+  arr/.style={-{Latex[length=1.8mm]},thick,color=Ink!72},
+  inputarr/.style={-{Latex[length=1.5mm]},color=Teal!75}
+]
+\node[state] (cprev) at (0,1.55) {$\mathbf c_{t-1}$};
+\node[op] (forgetmul) at (2.35,1.55) {$\odot$};
+\node[op] (sum) at (7.85,1.55) {$+$};
+\node[state] (ct) at (9.35,1.55) {$\mathbf c_t$};
+\node[state] (tanhct) at (11.0,1.55) {$\tanh$};
+\node[op] (outmul) at (12.75,1.55) {$\odot$};
+\node[state] (ht) at (14.45,1.55) {$\mathbf h_t$};
+
+\node[gate] (fgate) at (2.35,-0.25) {$\mathbf f_t=\sigma(\cdot)$};
+\node[gate] (igate) at (4.75,-0.25) {$\mathbf i_t=\sigma(\cdot)$};
+\node[candidate] (cand) at (7.15,-0.25)
+  {$\widetilde{\mathbf c}_t=\tanh(\cdot)$};
+\node[op] (writemul) at (6.05,0.65) {$\odot$};
+\node[gate] (ogate) at (12.75,-0.25) {$\mathbf o_t=\sigma(\cdot)$};
+
+\draw[arr] (cprev)--(forgetmul);
+\draw[arr] (forgetmul)--(sum);
+\draw[arr] (sum)--(ct);
+\draw[arr] (ct)--(tanhct);
+\draw[arr] (tanhct)--(outmul);
+\draw[arr] (outmul)--(ht);
+\draw[arr] (fgate)--(forgetmul);
+\draw[arr] (igate.north)--(writemul.south west);
+\draw[arr] (cand.north)--(writemul.south east);
+\draw[arr] (writemul)--(sum);
+\draw[arr] (ogate)--(outmul);
+
+\node[align=center] (gateinput) at (7.55,-2.0)
+  {shared gate inputs\\$(\mathbf x_t,\mathbf h_{t-1})$};
+\draw[Teal!55,thick] (2.35,-1.35)--(12.75,-1.35);
+\draw[inputarr] (gateinput)--(7.55,-1.35);
+\draw[inputarr] (2.35,-1.35)--(fgate.south);
+\draw[inputarr] (4.75,-1.35)--(igate.south);
+\draw[inputarr] (7.15,-1.35)--(cand.south);
+\draw[inputarr] (12.75,-1.35)--(ogate.south);
+
+\node[Blue,above=2mm of cprev] {previous memory};
+\node[Blue,above=2mm of ct] {updated memory};
+\node[Teal,above=2mm of ht] {exposed state};
+\node[Orange,align=center] at (4.75,2.35)
+  {retain old content};
+\node[Orange,align=center] at (6.25,1.15)
+  {write candidate};
+\end{tikzpicture}
+\caption{Information flow in an LSTM cell. The forget and input branches form the additive update $\mathbf c_t=\mathbf f_t\odot\mathbf c_{t-1}+\mathbf i_t\odot\widetilde{\mathbf c}_t$; the output gate exposes $\mathbf h_t=\mathbf o_t\odot\tanh(\mathbf c_t)$. The gates and candidate all depend on $(\mathbf x_t,\mathbf h_{t-1})$.}
+\label{fig:lstm-flow}
+\end{figure}}
+
+\newcommand{\KmeansIterationElbowFigure}{%
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[font=\scriptsize]
+% Assignment and centroid update.
+\begin{scope}
+  \draw[-{Latex[length=1.7mm]},Ink!65] (0,0)--(6.3,0) node[right] {$x_1$};
+  \draw[-{Latex[length=1.7mm]},Ink!65] (0,0)--(0,4.7) node[above] {$x_2$};
+
+  \coordinate (oldone) at (1.45,1.15);
+  \coordinate (newone) at (1.925,1.8375);
+  \coordinate (oldtwo) at (5.25,3.80);
+  \coordinate (newtwo) at (4.7125,3.175);
+
+  \foreach \p in {(1.15,1.85),(1.75,2.15),(2.25,1.35),(2.55,2.00)} {
+    \draw[Blue!45,dashed] \p--(oldone);
+    \fill[Blue] \p circle (2pt);
+  }
+  \foreach \p in {(4.05,2.85),(4.45,3.65),(5.05,2.95),(5.30,3.25)} {
+    \draw[Orange!50,dashed] \p--(oldtwo);
+    \draw[Red,thick] \p ++(-2pt,-2pt)--++(4pt,4pt)
+      \p ++(-2pt,2pt)--++(4pt,-4pt);
+  }
+
+  \draw[Blue,very thick,fill=white] (oldone) circle (3.8pt);
+  \fill[Blue] (newone) circle (3.2pt);
+  \draw[Orange,very thick,fill=white] (oldtwo) circle (3.8pt);
+  \fill[Orange] (newtwo) circle (3.2pt);
+  \draw[-{Latex[length=1.7mm]},Blue,very thick] (oldone)--(newone);
+  \draw[-{Latex[length=1.7mm]},Orange,very thick] (oldtwo)--(newtwo);
+
+  \node[font=\bfseries\small] at (3.15,5.2)
+    {One assignment--update cycle};
+  \node[align=center,Ink] at (3.2,-0.65)
+    {dashed links: nearest-centroid assignment\\
+     arrows: centroid moves to assigned mean};
+\end{scope}
+
+\draw[Rule,thick] (7.0,-0.5)--(7.0,5.15);
+
+% Schematic elbow curve.
+\begin{scope}[shift={(8.15,0.25)}]
+  \draw[-{Latex[length=1.7mm]},Ink!65] (0,0)--(6.4,0) node[right] {$K$};
+  \draw[-{Latex[length=1.7mm]},Ink!65] (0,0)--(0,4.6);
+  \node[rotate=90] at (-0.62,2.30) {within-cluster objective $J(K)$};
+  \foreach \k in {1,...,6} {
+    \draw[Ink!55] (\k,0.08)--(\k,-0.08) node[below] {\k};
+  }
+  \draw[Navy,very thick]
+    plot[smooth] coordinates {(1,4.05) (2,2.55) (3,1.50) (4,1.20) (5,1.05) (6,0.96)};
+  \foreach \p in {(1,4.05),(2,2.55),(3,1.50),(4,1.20),(5,1.05),(6,0.96)}
+    \fill[Navy] \p circle (2.1pt);
+  \draw[Orange,dashed,thick] (3,0)--(3,1.50);
+  \draw[Orange,very thick] (3,1.50) circle (4.2pt);
+  \node[Orange,anchor=west,align=left] at (3.25,1.75)
+    {possible elbow:\\smaller gains beyond $K=3$};
+  \node[font=\bfseries\small] at (3.35,5.0)
+    {Elbow heuristic (schematic)};
+\end{scope}
+\end{tikzpicture}
+\caption{K-means alternates between assigning each sample to its nearest current centroid and replacing each centroid by its assigned mean; each step does not increase the objective. The elbow plot compares the final objective across values of $K$. A visible bend can guide model selection, but a smooth curve does not determine a unique $K$.}
+\label{fig:kmeans-iteration-elbow}
+\end{figure}}
+
+\newcommand{\ActivationCouplingFigure}{%
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  value/.style={draw=Blue,rounded corners,fill=PaleBlue,
+    minimum width=11mm,minimum height=7mm,inner sep=1.5mm},
+  activated/.style={draw=Teal,rounded corners,fill=PaleTeal,
+    minimum width=17mm,minimum height=7mm,inner sep=1.5mm},
+  normalise/.style={draw=Orange,rounded corners,fill=PaleOrange,
+    minimum width=31mm,minimum height=17mm,align=center,inner sep=2mm},
+  arr/.style={-{Latex[length=1.8mm]},thick,color=Ink!70}
+]
+% Elementwise hidden activation.
+\node[font=\small\bfseries] at (3.05,3.45)
+  {Hidden activation: coordinatewise};
+\foreach \i/\y in {1/2.45,2/1.55,3/0.65} {
+  \node[value] (hz\i) at (0.55,\y) {$z_{\i}$};
+  \node[activated] (hphi\i) at (2.55,\y) {$\phi(z_{\i})$};
+  \node[value] (ha\i) at (4.65,\y) {$a_{\i}$};
+  \draw[arr] (hz\i)--(hphi\i);
+  \draw[arr] (hphi\i)--(ha\i);
+}
+\node[align=center,color=Teal] at (2.65,-0.15)
+  {$\displaystyle \frac{\partial a_i}{\partial z_j}=0\quad(i\ne j)$};
+
+\draw[Rule,thick] (6.25,-0.45)--(6.25,3.70);
+
+% Vector-coupled Softmax output.
+\begin{scope}[xshift=7.05cm]
+  \node[font=\small\bfseries] at (3.20,3.45)
+    {Softmax output: vector-coupled};
+  \node[normalise] (snorm) at (3.00,1.55)
+    {shared normalisation\\[1mm]
+     $\displaystyle p_i=\frac{e^{z_i}}{\sum_j e^{z_j}}$};
+  \foreach \i/\y in {1/2.45,2/1.55,3/0.65} {
+    \node[value] (sz\i) at (0.35,\y) {$z_{\i}$};
+    \node[value] (sp\i) at (5.65,\y) {$p_{\i}$};
+    \draw[arr] (sz\i.east)--(snorm.west);
+    \draw[arr] (snorm.east)--(sp\i.west);
+  }
+  \node[align=center,color=Orange] at (3.15,-0.15)
+    {$\displaystyle \sum_i p_i=1,\qquad
+      \frac{\partial p_i}{\partial z_j}=-p_i p_j\ (i\ne j)$};
+\end{scope}
+\end{tikzpicture}
+\caption{Hidden-layer activations such as ReLU act coordinate by coordinate: changing $z_j$ directly changes only $a_j$. Softmax uses a shared denominator, so changing one logit generally changes every class probability.}
+\label{fig:activation-coupling}
+\end{figure}}
+
+\newcommand{\AutoencoderManifoldFigure}{%
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  code/.style={draw=Orange,rounded corners,fill=PaleOrange,
+    minimum width=17mm,minimum height=9mm,align=center,inner sep=1.5mm},
+  recon/.style={draw=Teal,rounded corners,fill=PaleTeal,
+    minimum width=20mm,minimum height=9mm,align=center,inner sep=1.5mm},
+  arr/.style={-{Latex[length=1.8mm]},thick,color=Ink!70},
+  collision/.style={-{Latex[length=1.8mm]},thick,color=Red!80}
+]
+% Exact reconstruction on lower-dimensional support.
+\node[font=\small\bfseries] at (3.45,4.55)
+  {Low-dimensional data support};
+\draw[-{Latex[length=1.5mm]},Ink!55] (0.20,2.20)--(3.05,2.20)
+  node[right] {$x_1$};
+\draw[-{Latex[length=1.5mm]},Ink!55] (0.55,1.05)--(0.55,3.55)
+  node[above] {$x_2$};
+\draw[Teal,very thick] (0.75,2.20)--(2.70,2.20);
+\foreach \x in {0.90,1.30,1.70,2.10,2.50}
+  \fill[Blue] (\x,2.20) circle (2.2pt);
+\node[Teal,above] at (1.70,2.45)
+  {$\mathcal M=\{(t,0):t\in\mathbb R\}$};
+\node[code] (exactcode) at (4.35,2.20) {$z=t$};
+\node[recon] (exactrecon) at (6.25,2.20)
+  {$\widehat{\mathbf x}=(z,0)$};
+\draw[arr] (3.05,2.20)--node[above,color=Ink]{encode}(exactcode);
+\draw[arr] (exactcode)--node[above,color=Ink]{decode}(exactrecon);
+\node[align=center,color=Teal] at (3.55,0.55)
+  {$q=1<d=2,\qquad \widehat{\mathbf x}=\mathbf x$
+   for $\mathbf x\in\mathcal M$};
+
+\draw[Rule,thick] (7.35,-0.05)--(7.35,4.80);
+
+% Collision on full-dimensional support.
+\begin{scope}[xshift=8.05cm]
+  \node[font=\small\bfseries] at (3.05,4.55)
+    {Support with non-empty interior};
+  \fill[PaleBlue] (0.15,1.20) rectangle (2.65,3.65);
+  \draw[Blue,thick] (0.15,1.20) rectangle (2.65,3.65);
+  \coordinate (xa) at (0.75,2.90);
+  \coordinate (xb) at (2.10,1.80);
+  \fill[Blue] (xa) circle (2.4pt);
+  \fill[Blue] (xb) circle (2.4pt);
+  \node[anchor=south east] at (xa) {$\mathbf x^{(a)}$};
+  \node[anchor=north west] at (xb) {$\mathbf x^{(b)}$};
+  \node[code] (sharedcode) at (4.05,2.40) {scalar code\\$z^\star$};
+  \node[recon] (sharedrecon) at (6.15,2.40)
+    {decoded point\\$g(z^\star)$};
+  \draw[collision] (xa)--(sharedcode.west);
+  \draw[collision] (xb)--(sharedcode.west);
+  \draw[arr] (sharedcode)--(sharedrecon);
+  \node[Red,align=center] at (4.25,3.70)
+    {a continuous lower-dimensional encoder\\must have some collision};
+  \node[align=center,color=Red] at (3.15,0.55)
+    {$f(\mathbf x^{(a)})=f(\mathbf x^{(b)})$
+     $\Longrightarrow$
+     $g(f(\mathbf x^{(a)}))=g(f(\mathbf x^{(b)}))$};
+\end{scope}
+\end{tikzpicture}
+\caption{An undercomplete code need not lose information. For $\mathcal M=\{(t,0):t\in\mathbb R\}\subset\mathbb R^2$, the maps $f(t,0)=t$ and $g(t)=(t,0)$ reconstruct every point exactly with $q=1<d=2$. By contrast, if the data support contains a full-dimensional open set and the encoder is continuous, a lower-dimensional encoder cannot be injective on that support. Bottleneck width constrains capacity but does not by itself determine information loss or representation quality.}
+\label{fig:autoencoder-manifold}
+\end{figure}}

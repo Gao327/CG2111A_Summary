@@ -1,0 +1,206 @@
+% Additional vector figures for optimisation, regularisation, and evaluation.
+
+\newcommand{\OptimisationPathFigure}{%
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  point/.style={circle,fill=white,draw,minimum size=3.1mm,inner sep=0pt},
+  pathstep/.style={-{Latex[length=1.7mm]},line width=0.75pt},
+  axis/.style={-{Latex[length=1.7mm]},color=Ink!65},
+  label/.style={font=\scriptsize,color=Ink}
+]
+\node[label,font=\scriptsize\bfseries] at (3.15,4.05) {Full-batch gradient descent};
+\node[label,font=\scriptsize\bfseries] at (10.45,4.05) {Stochastic and mini-batch updates};
+
+\begin{scope}
+  \draw[axis] (0.2,0.2)--(6.1,0.2) node[right,label] {$\theta_1$};
+  \draw[axis] (0.2,0.2)--(0.2,3.75) node[above,label] {$\theta_2$};
+  \begin{scope}[shift={(3.45,1.85)},rotate=-18]
+    \draw[Blue!24,thick] (0,0) ellipse (2.75 and 1.40);
+    \draw[Blue!34,thick] (0,0) ellipse (2.05 and 1.03);
+    \draw[Blue!46,thick] (0,0) ellipse (1.35 and 0.68);
+    \draw[Blue!58,thick] (0,0) ellipse (0.66 and 0.33);
+  \end{scope}
+  \coordinate (g0) at (0.75,3.35);
+  \coordinate (g1) at (1.55,2.72);
+  \coordinate (g2) at (2.25,2.28);
+  \coordinate (g3) at (2.82,2.02);
+  \coordinate (g4) at (3.25,1.89);
+  \coordinate (g5) at (3.45,1.85);
+  \foreach \a/\b in {g0/g1,g1/g2,g2/g3,g3/g4,g4/g5}
+    \draw[pathstep,Navy] (\a)--(\b);
+  \foreach \p in {g0,g1,g2,g3,g4}
+    \node[point,draw=Navy] at (\p) {};
+  \fill[Navy] (g5) circle (2.1pt);
+  \node[label,anchor=south west] at (g0) {$\vect\theta_0$};
+  \node[label,anchor=north west] at (3.55,1.80) {minimum};
+\end{scope}
+
+\begin{scope}[xshift=7.3cm]
+  \draw[axis] (0.2,0.2)--(6.1,0.2) node[right,label] {$\theta_1$};
+  \draw[axis] (0.2,0.2)--(0.2,3.75) node[above,label] {$\theta_2$};
+  \begin{scope}[shift={(3.45,1.85)},rotate=-18]
+    \draw[Blue!24,thick] (0,0) ellipse (2.75 and 1.40);
+    \draw[Blue!34,thick] (0,0) ellipse (2.05 and 1.03);
+    \draw[Blue!46,thick] (0,0) ellipse (1.35 and 0.68);
+    \draw[Blue!58,thick] (0,0) ellipse (0.66 and 0.33);
+  \end{scope}
+  \coordinate (m0) at (0.75,3.35);
+  \coordinate (m1) at (1.30,2.68);
+  \coordinate (m2) at (2.15,2.45);
+  \coordinate (m3) at (2.72,1.95);
+  \coordinate (m4) at (3.10,2.02);
+  \coordinate (m5) at (3.42,1.86);
+  \foreach \a/\b in {m0/m1,m1/m2,m2/m3,m3/m4,m4/m5}
+    \draw[pathstep,Teal] (\a)--(\b);
+  \coordinate (s0) at (0.75,3.35);
+  \coordinate (s1) at (1.45,2.32);
+  \coordinate (s2) at (1.97,2.82);
+  \coordinate (s3) at (2.48,1.72);
+  \coordinate (s4) at (3.03,2.31);
+  \coordinate (s5) at (3.66,1.48);
+  \coordinate (s6) at (3.38,1.87);
+  \foreach \a/\b in {s0/s1,s1/s2,s2/s3,s3/s4,s4/s5,s5/s6}
+    \draw[pathstep,Orange] (\a)--(\b);
+  \fill[Navy] (3.45,1.85) circle (2.1pt);
+  \draw[Teal,line width=0.9pt] (4.35,3.32)--(4.85,3.32)
+    node[right,label] {mini-batch};
+  \draw[Orange,line width=0.9pt] (4.35,2.92)--(4.85,2.92)
+    node[right,label] {SGD};
+\end{scope}
+\end{tikzpicture}
+\caption{Optimisation paths on the same schematic loss contours. A full-batch gradient gives a deterministic direction for fixed parameters. Mini-batch and single-example gradients are random estimates of that direction; smaller batches usually produce larger step-to-step variation, even when the estimate is unbiased.}
+\label{fig:optimisation-paths}
+\end{figure}}
+
+\newcommand{\RegularisationGeometryFigure}{%
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  axis/.style={-{Latex[length=1.7mm]},color=Ink!65},
+  contour/.style={Blue!55,thick},
+  feasible/.style={Teal,thick,fill=PaleTeal,fill opacity=0.75},
+  label/.style={font=\scriptsize,color=Ink}
+]
+\node[label,font=\scriptsize\bfseries] at (3.25,5.15) {$L_1$ constraint};
+\node[label,font=\scriptsize\bfseries] at (10.35,5.15) {$L_2$ constraint};
+
+\begin{scope}[shift={(3.0,1.9)}]
+  \draw[axis] (-2.45,0)--(2.65,0) node[right,label] {$\theta_1$};
+  \draw[axis] (0,-1.65)--(0,2.05) node[above,label] {$\theta_2$};
+  \draw[feasible] (0,1.25)--(1.25,0)--(0,-1.25)--(-1.25,0)--cycle;
+  \begin{scope}[shift={(1.65,1.85)},rotate=35]
+    \draw[contour] (0,0) ellipse (0.78 and 0.48);
+    \draw[contour] (0,0) ellipse (1.25 and 0.77);
+    \draw[contour] (0,0) ellipse (1.72 and 1.06);
+  \end{scope}
+  \fill[Orange] (0,1.25) circle (2.3pt);
+  \draw[Orange,-{Latex[length=1.6mm]},thick] (-0.75,1.72)--(-0.08,1.32);
+  \node[label,anchor=e] at (-0.78,1.74) {axis corner};
+  \fill[Navy] (1.65,1.85) circle (2.1pt);
+  \node[label,anchor=south west] at (1.67,1.87) {unregularised minimum};
+  \node[label,Teal] at (-0.83,-0.88) {$\norm{\vect\theta}_1\leq C$};
+\end{scope}
+
+\begin{scope}[shift={(10.1,1.9)}]
+  \draw[axis] (-2.45,0)--(2.65,0) node[right,label] {$\theta_1$};
+  \draw[axis] (0,-1.65)--(0,2.05) node[above,label] {$\theta_2$};
+  \draw[feasible] (0,0) circle (1.25);
+  \begin{scope}[shift={(1.65,1.85)},rotate=35]
+    \draw[contour] (0,0) ellipse (0.78 and 0.48);
+    \draw[contour] (0,0) ellipse (1.25 and 0.77);
+    \draw[contour] (0,0) ellipse (1.72 and 1.06);
+  \end{scope}
+  \fill[Orange] (0.78,0.98) circle (2.3pt);
+  \draw[Orange,-{Latex[length=1.6mm]},thick] (-0.25,1.55)--(0.70,1.05);
+  \node[label,anchor=e] at (-0.27,1.57) {smooth boundary};
+  \fill[Navy] (1.65,1.85) circle (2.1pt);
+  \node[label,anchor=south west] at (1.67,1.87) {unregularised minimum};
+  \node[label,Teal] at (-0.91,-0.96) {$\norm{\vect\theta}_2\leq C$};
+\end{scope}
+\end{tikzpicture}
+\caption{Constrained views of regularisation. Expanding a loss contour from its unregularised minimum until it meets the feasible set gives the constrained solution. An $L_1$ ball has axis-aligned corners, so contact often sets a coefficient exactly to zero; the smooth $L_2$ boundary usually produces shrinkage without sparsity. The contact locations shown are schematic rather than universal.}
+\label{fig:regularisation-geometry}
+\end{figure}}
+
+\newcommand{\ThresholdEvaluationFigure}{%
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  axis/.style={-{Latex[length=1.6mm]},color=Ink!65},
+  flow/.style={-{Latex[length=1.8mm]},thick,color=Ink!55},
+  label/.style={font=\scriptsize,color=Ink}
+]
+% Score and threshold.
+\begin{scope}
+  \node[label,font=\scriptsize\bfseries] at (2.0,3.45) {Scores and one threshold};
+  \draw[axis] (0,1.65)--(4.2,1.65) node[right,label] {score};
+  \draw[Red,dashed,thick] (2.35,0.75)--(2.35,2.85);
+  \node[label,Red,above] at (2.35,2.85) {$\tau$};
+  \node[label,anchor=north] at (1.15,1.40) {predict $0$};
+  \node[label,anchor=north] at (3.30,1.40) {predict $1$};
+  \foreach \x in {1.25,2.05,2.85,3.35,3.85}
+    \fill[Blue] (\x,2.25) circle (2.2pt);
+  \foreach \x in {0.55,1.05,1.72,2.62}
+    \draw[Orange,thick] (\x,1.02) ++(-2.2pt,-2.2pt)--++(4.4pt,4.4pt)
+      (\x,1.02) ++(-2.2pt,2.2pt)--++(4.4pt,-4.4pt);
+  \node[label,Blue,anchor=e] at (0.25,2.25) {$Y=1$};
+  \node[label,Orange,anchor=e] at (0.25,1.02) {$Y=0$};
+\end{scope}
+
+% Confusion matrix.
+\begin{scope}[shift={(5.15,0.72)}]
+  \node[label,font=\scriptsize\bfseries] at (1.55,2.73) {Confusion matrix at $\tau$};
+  \node[label] at (1.60,2.35) {predicted};
+  \node[label] at (1.05,2.05) {$0$};
+  \node[label] at (2.15,2.05) {$1$};
+  \node[label,anchor=east] at (0.42,1.55) {actual $0$};
+  \node[label,anchor=east] at (0.42,0.45) {actual $1$};
+  \fill[PaleBlue] (0.5,1.1) rectangle (1.6,2.0);
+  \fill[PaleRed] (1.7,1.1) rectangle (2.8,2.0);
+  \fill[PaleOrange] (0.5,0) rectangle (1.6,0.9);
+  \fill[PaleTeal] (1.7,0) rectangle (2.8,0.9);
+  \draw[Rule] (0.5,0) rectangle (1.6,0.9);
+  \draw[Rule] (1.7,0) rectangle (2.8,0.9);
+  \draw[Rule] (0.5,1.1) rectangle (1.6,2.0);
+  \draw[Rule] (1.7,1.1) rectangle (2.8,2.0);
+  \node[label] at (1.05,1.55) {$TN=3$};
+  \node[label] at (2.25,1.55) {$FP=1$};
+  \node[label] at (1.05,0.45) {$FN=2$};
+  \node[label] at (2.25,0.45) {$TP=3$};
+\end{scope}
+
+% ROC panel.
+\begin{scope}[shift={(9.05,0.72)}]
+  \node[label,font=\scriptsize\bfseries] at (1.35,2.73) {ROC curve};
+  \draw[axis] (0,0)--(2.65,0);
+  \draw[axis] (0,0)--(0,2.40);
+  \node[label] at (1.30,-0.30) {FPR};
+  \node[label,rotate=90] at (-0.35,1.18) {TPR};
+  \draw[Rule,dashed] (0,0)--(2.45,2.20);
+  \draw[Navy,very thick] plot[smooth] coordinates
+    {(0,0) (0.18,0.78) (0.61,1.32) (1.25,1.82) (2.45,2.20)};
+  \fill[Red] (0.61,1.32) circle (2.3pt);
+  \node[label,Red,anchor=west] at (0.71,1.26) {$\tau$};
+\end{scope}
+
+% Precision--recall panel.
+\begin{scope}[shift={(12.55,0.72)}]
+  \node[label,font=\scriptsize\bfseries] at (1.35,2.73) {Precision--recall};
+  \draw[axis] (0,0)--(2.65,0);
+  \draw[axis] (0,0)--(0,2.40);
+  \node[label] at (1.30,-0.30) {Recall};
+  \node[label,rotate=90] at (-0.42,1.18) {Precision};
+  \draw[Rule,dashed] (0,1.22)--(2.45,1.22)
+    node[above left,label] {prevalence};
+  \draw[Teal,very thick] plot[smooth] coordinates
+    {(0.08,2.25) (0.60,2.08) (1.47,1.65) (1.90,1.42) (2.45,1.22)};
+  \fill[Red] (1.47,1.65) circle (2.3pt);
+  \node[label,Red,anchor=west] at (1.57,1.59) {$\tau$};
+\end{scope}
+
+\draw[flow] (4.35,2.05)--(4.95,2.05);
+\end{tikzpicture}
+\caption{A threshold converts scores into predicted labels and therefore fixes one confusion matrix. That matrix gives one ROC point $(\mathrm{FPR},\mathrm{TPR})$ and one precision--recall point $(\mathrm{Recall},\mathrm{Precision})$. Sweeping the threshold traces both curves; the random-ranking baseline for Precision equals the positive-class prevalence.}
+\label{fig:threshold-evaluation}
+\end{figure}}
